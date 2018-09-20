@@ -19,16 +19,16 @@ import science.atlarge.graphalytics.domain.algorithms.AlgorithmParameters;
 import science.atlarge.graphalytics.domain.algorithms.BreadthFirstSearchParameters;
 import science.atlarge.graphalytics.execution.RunSpecification;
 import science.atlarge.graphalytics.domain.benchmark.BenchmarkRun;
-import science.atlarge.graphalytics.nvgraph.NVGraphJob;
-import science.atlarge.graphalytics.nvgraph.NVGraphConfiguration;
+import science.atlarge.graphalytics.nvgraph.NvgraphJob;
+import science.atlarge.graphalytics.nvgraph.NvgraphConfiguration;
 
 /**
- * Breadth-first Search job implementation for NVGraph. This class is responsible for formatting BFS-specific
+ * Breadth-first Search job implementation for Nvgraph. This class is responsible for formatting BFS-specific
  * arguments to be passed to the platform executable, and does not include the implementation of the algorithm.
  *
  * @author Ahmed
  */
-public final class BreadthFirstSearchJob extends NVGraphJob {
+public final class BreadthFirstSearchJob extends NvgraphJob {
 
 	private final long sourceVertex;
 
@@ -38,7 +38,7 @@ public final class BreadthFirstSearchJob extends NVGraphJob {
 	 * @param platformConfig the platform configuration.
 	 * @param inputPath the path to the input graph.
 	 */
-	public BreadthFirstSearchJob(RunSpecification runSpecification, NVGraphConfiguration platformConfig,
+	public BreadthFirstSearchJob(RunSpecification runSpecification, NvgraphConfiguration platformConfig,
 								 String inputPath, String outputPath) {
 		super(runSpecification, platformConfig, inputPath, outputPath);
 

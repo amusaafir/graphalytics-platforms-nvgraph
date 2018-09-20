@@ -19,7 +19,7 @@
 		<log4j.version>2.5</log4j.version>
 	</properties>
 
-	<name>Graphalytics Platform NVGraph</name>
+	<name>Graphalytics Platform Nvgraph</name>
 
 	<scm>
 		<developerConnection>scm:git:git@github.com:atlarge-research/graphalytics-platforms-nvgraph.git</developerConnection>

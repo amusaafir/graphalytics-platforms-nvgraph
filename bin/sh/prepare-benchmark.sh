@@ -26,10 +26,10 @@ export LIBRARY_JAR=`ls lib/graphalytics-*default*.jar`
 
 
 # Construct the classpath
-PLATFORM_HOME=$(grep -E "^platform.nvgraph.home[	 ]*[:=]" $config/platform.properties | sed 's/platform.nvgraph.home[\t ]*[:=][\t ]*\([^\t ]*\).*/\1/g' | head -n 1)
-if [ -z $PLATFORM_HOME ]; then
-    echo "Error: NVGraph home directory not specified."
-    echo "Define variable platform.nvgraph.home in $config/platform.properties"
-    exit 1
-fi
+#PLATFORM_HOME=$(grep -E "^platform.nvgraph.home[	 ]*[:=]" $config/platform.properties | sed 's/platform.nvgraph.home[\t ]*[:=][\t ]*\([^\t ]*\).*/\1/g' | head -n 1)
+#if [ -z $PLATFORM_HOME ]; then
+#    echo "Error: Nvgraph home directory not specified."
+#    echo "Define variable platform.nvgraph.home in $config/platform.properties"
+#    exit 1
+#fi
 

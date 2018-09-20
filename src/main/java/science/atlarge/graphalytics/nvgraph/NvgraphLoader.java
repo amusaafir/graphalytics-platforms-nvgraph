@@ -32,21 +32,21 @@ import java.nio.file.Path;
  *
  * @author Ahmed
  */
-public class NVGraphLoader {
+public class NvgraphLoader {
 
 	private static final Logger LOG = LogManager.getLogger();
 
 	protected CommandLine commandLine;
 	protected FormattedGraph formattedGraph;
-	protected NVGraphConfiguration platformConfig;
+	protected NvgraphConfiguration platformConfig;
 
 
 	/**
-	 *	Graph loader for NVGraph.
+	 *	Graph loader for Nvgraph.
 	 * @param formattedGraph
 	 * @param platformConfig
 	 */
-	public NVGraphLoader(FormattedGraph formattedGraph, NVGraphConfiguration platformConfig) {
+	public NvgraphLoader(FormattedGraph formattedGraph, NvgraphConfiguration platformConfig) {
 		this.formattedGraph = formattedGraph;
 		this.platformConfig = platformConfig;
 	}

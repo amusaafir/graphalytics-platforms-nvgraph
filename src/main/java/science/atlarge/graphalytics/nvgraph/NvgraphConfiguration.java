@@ -29,7 +29,7 @@ import java.nio.file.Paths;
  *
  * @author Ahmed
  */
-public final class NVGraphConfiguration {
+public final class NvgraphConfiguration {
 
 	protected static final Logger LOG = LogManager.getLogger();
 
@@ -47,9 +47,9 @@ public final class NVGraphConfiguration {
 	private int numThreads = 1;
 
 	/**
-	 * Creates a new NVGraphConfiguration object to capture all platform parameters that are not specific to any algorithm.
+	 * Creates a new NvgraphConfiguration object to capture all platform parameters that are not specific to any algorithm.
 	 */
-	public NVGraphConfiguration(){
+	public NvgraphConfiguration(){
 	}
 
 	public String getLoaderPath() {
@@ -133,9 +133,9 @@ public final class NVGraphConfiguration {
 	}
 
 
-	public static NVGraphConfiguration parsePropertiesFile() {
+	public static NvgraphConfiguration parsePropertiesFile() {
 
-		NVGraphConfiguration platformConfig = new NVGraphConfiguration();
+		NvgraphConfiguration platformConfig = new NvgraphConfiguration();
 
 		Configuration configuration = null;
 		try {

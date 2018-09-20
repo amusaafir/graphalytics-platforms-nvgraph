@@ -18,16 +18,16 @@ import science.atlarge.graphalytics.execution.RunSpecification;
 import science.atlarge.graphalytics.domain.algorithms.AlgorithmParameters;
 import science.atlarge.graphalytics.domain.algorithms.SingleSourceShortestPathsParameters;
 import science.atlarge.graphalytics.domain.benchmark.BenchmarkRun;
-import science.atlarge.graphalytics.nvgraph.NVGraphJob;
-import science.atlarge.graphalytics.nvgraph.NVGraphConfiguration;
+import science.atlarge.graphalytics.nvgraph.NvgraphJob;
+import science.atlarge.graphalytics.nvgraph.NvgraphConfiguration;
 
 /**
- * Single Source Shortest Paths job implementation for NVGraph. This class is responsible for formatting SSSP-specific
+ * Single Source Shortest Paths job implementation for Nvgraph. This class is responsible for formatting SSSP-specific
  * arguments to be passed to the platform executable, and does not include the implementation of the algorithm.
  *
  * @author Ahmed
  */
-public final class SingleSourceShortestPathsJob extends NVGraphJob {
+public final class SingleSourceShortestPathsJob extends NvgraphJob {
 
 	private final long sourceVertex;
 
@@ -38,7 +38,7 @@ public final class SingleSourceShortestPathsJob extends NVGraphJob {
 	 * @param inputPath the path to the input graph.
 	 */
 	public SingleSourceShortestPathsJob(RunSpecification runSpecification,
-										NVGraphConfiguration platformConfig,
+										NvgraphConfiguration platformConfig,
 										String inputPath, String outputPath) {
 		super(runSpecification, platformConfig, inputPath, outputPath);
 

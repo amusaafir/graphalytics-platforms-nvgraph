@@ -34,27 +34,22 @@ import science.atlarge.graphalytics.nvgraph.algorithms.lcc.LocalClusteringCoeffi
 import science.atlarge.graphalytics.nvgraph.algorithms.pr.PageRankJob;
 import science.atlarge.graphalytics.nvgraph.algorithms.sssp.SingleSourceShortestPathsJob;
 import science.atlarge.graphalytics.nvgraph.algorithms.wcc.WeaklyConnectedComponentsJob;
-
-import java.util.List;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 
 /**
- * NVGraph platform driver for the Graphalytics benchmark.
+ * Nvgraph platform driver for the Graphalytics benchmark.
  *
  * @author Ahmed
  */
-public class NVGraphPlatform implements Platform {
+public class NvgraphPlatform implements Platform {
 
 	protected static final Logger LOG = LogManager.getLogger();
 
 	public static final String PLATFORM_NAME = "nvgraph";
-	public NVGraphLoader loader;
+	public NvgraphLoader loader;
 
-	public NVGraphPlatform() {
+	public NvgraphPlatform() {
 
 	}
 
@@ -65,8 +60,8 @@ public class NVGraphPlatform implements Platform {
 
 	@Override
 	public LoadedGraph loadGraph(FormattedGraph formattedGraph) throws Exception {
-		NVGraphConfiguration platformConfig = NVGraphConfiguration.parsePropertiesFile();
-		loader = new NVGraphLoader(formattedGraph, platformConfig);
+		NvgraphConfiguration platformConfig = NvgraphConfiguration.parsePropertiesFile();
+		loader = new NvgraphLoader(formattedGraph, platformConfig);
 
 		LOG.info("Loading graph " + formattedGraph.getName());
 		Path loadedPath = Paths.get("./intermediate").resolve(formattedGraph.getName());
@@ -75,10 +70,10 @@ public class NVGraphPlatform implements Platform {
 
 			int exitCode = loader.load(loadedPath.toString());
 			if (exitCode != 0) {
-				throw new PlatformExecutionException("NVGraph exited with an error code: " + exitCode);
+				throw new PlatformExecutionException("Nvgraph exited with an error code: " + exitCode);
 			}
 		} catch (Exception e) {
-			throw new PlatformExecutionException("Failed to load a NVGraph dataset.", e);
+			throw new PlatformExecutionException("Failed to load a Nvgraph dataset.", e);
 		}
 		LOG.info("Loaded graph " + formattedGraph.getName());
 		return new LoadedGraph(formattedGraph, loadedPath.toString());
@@ -91,10 +86,10 @@ public class NVGraphPlatform implements Platform {
 
 			int exitCode = loader.unload(loadedGraph.getLoadedPath());
 			if (exitCode != 0) {
-				throw new PlatformExecutionException("NVGraph exited with an error code: " + exitCode);
+				throw new PlatformExecutionException("Nvgraph exited with an error code: " + exitCode);
 			}
 		} catch (Exception e) {
-			throw new PlatformExecutionException("Failed to unload a NVGraph dataset.", e);
+			throw new PlatformExecutionException("Failed to unload a Nvgraph dataset.", e);
 		}
 		LOG.info("Unloaded graph " +  loadedGraph.getFormattedGraph().getName());
 	}
@@ -108,7 +103,7 @@ public class NVGraphPlatform implements Platform {
 	public void startup(RunSpecification runSpecification) throws Exception {
 		BenchmarkRunSetup benchmarkRunSetup = runSpecification.getBenchmarkRunSetup();
 		Path logDir = benchmarkRunSetup.getLogDir().resolve("platform").resolve("runner.logs");
-		NVGraphCollector.startPlatformLogging(logDir);
+		NvgraphCollector.startPlatformLogging(logDir);
 	}
 
 	@Override
@@ -119,11 +114,11 @@ public class NVGraphPlatform implements Platform {
 		RuntimeSetup runtimeSetup = runSpecification.getRuntimeSetup();
 
 		Algorithm algorithm = benchmarkRun.getAlgorithm();
-		NVGraphConfiguration platformConfig = NVGraphConfiguration.parsePropertiesFile();
+		NvgraphConfiguration platformConfig = NvgraphConfiguration.parsePropertiesFile();
 		String inputPath = runtimeSetup.getLoadedGraph().getLoadedPath();
 		String outputPath = benchmarkRunSetup.getOutputDir().resolve(benchmarkRun.getName()).toAbsolutePath().toString();
 
-		NVGraphJob job;
+		NvgraphJob job;
 		switch (algorithm) {
 			case BFS:
 				job = new BreadthFirstSearchJob(runSpecification, platformConfig, inputPath, outputPath);
@@ -155,10 +150,10 @@ public class NVGraphPlatform implements Platform {
 
 			int exitCode = job.execute();
 			if (exitCode != 0) {
-				throw new PlatformExecutionException("NVGraph exited with an error code: " + exitCode);
+				throw new PlatformExecutionException("Nvgraph exited with an error code: " + exitCode);
 			}
 		} catch (Exception e) {
-			throw new PlatformExecutionException("Failed to execute a NVGraph job.", e);
+			throw new PlatformExecutionException("Failed to execute a Nvgraph job.", e);
 		}
 
 		LOG.info("Executed benchmark with algorithm \"{}\" on graph \"{}\".",
@@ -169,12 +164,12 @@ public class NVGraphPlatform implements Platform {
 
 	@Override
 	public BenchmarkMetrics finalize(RunSpecification runSpecification) throws Exception {
-		NVGraphCollector.stopPlatformLogging();
+		NvgraphCollector.stopPlatformLogging();
 		BenchmarkRunSetup benchmarkRunSetup = runSpecification.getBenchmarkRunSetup();
 		Path logDir = benchmarkRunSetup.getLogDir().resolve("platform");
 
 		BenchmarkMetrics metrics = new BenchmarkMetrics();
-		metrics.setProcessingTime(NVGraphCollector.collectProcessingTime(logDir));
+		metrics.setProcessingTime(NvgraphCollector.collectProcessingTime(logDir));
 		return metrics;
 	}
 
@@ -186,40 +181,5 @@ public class NVGraphPlatform implements Platform {
 	@Override
 	public String getPlatformName() {
 		return PLATFORM_NAME;
-	}
-
-	public static void runCommand(String format, String binaryName, List<String> args) throws InterruptedException, IOException {
-		String argsString = "";
-		for (String arg: args) {
-			argsString += arg + " ";
-		}
-
-		System.out.println("format = " + format);
-		System.out.println("binaryName = " + binaryName);
-		System.out.println("argsString = " + argsString);
-		String cmd = String.format(format, binaryName, argsString);
-
-		LOG.info("running command: {}", cmd);
-
-		ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
-//		pb.redirectErrorStream(true);
-//		pb.redirectError(Redirect.INHERIT);
-//		pb.redirectOutput(Redirect.INHERIT);
-//		pb.inheritIO();
-		pb.redirectErrorStream(true);
-		Process process = pb.start();
-
-		InputStreamReader isr = new InputStreamReader(process.getInputStream());
-		BufferedReader br = new BufferedReader(isr);
-		String line;
-		while ((line = br.readLine()) != null) {
-			System.out.println(line);
-		}
-
-		int exit = process.waitFor();
-
-		if (exit != 0) {
-			throw new IOException("unexpected error code");
-		}
 	}
 }

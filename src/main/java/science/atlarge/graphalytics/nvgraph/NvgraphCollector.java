@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Ahmed
  */
-public class NVGraphCollector {
+public class NvgraphCollector {
 
 	protected static final Logger LOG = LogManager.getLogger();
 

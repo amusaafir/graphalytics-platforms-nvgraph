@@ -19,16 +19,16 @@ import science.atlarge.graphalytics.domain.algorithms.AlgorithmParameters;
 import science.atlarge.graphalytics.domain.algorithms.CommunityDetectionLPParameters;
 import science.atlarge.graphalytics.execution.RunSpecification;
 import science.atlarge.graphalytics.domain.benchmark.BenchmarkRun;
-import science.atlarge.graphalytics.nvgraph.NVGraphJob;
-import science.atlarge.graphalytics.nvgraph.NVGraphConfiguration;
+import science.atlarge.graphalytics.nvgraph.NvgraphJob;
+import science.atlarge.graphalytics.nvgraph.NvgraphConfiguration;
 
 /**
- * Community Detection job implementation for NVGraph. This class is responsible for formatting CDLP-specific
+ * Community Detection job implementation for Nvgraph. This class is responsible for formatting CDLP-specific
  * arguments to be passed to the platform executable, and does not include the implementation of the algorithm.
  *
  * @author Ahmed
  */
-public final class CommunityDetectionLPJob extends NVGraphJob {
+public final class CommunityDetectionLPJob extends NvgraphJob {
 
 	private final long iteration;
 
@@ -38,7 +38,7 @@ public final class CommunityDetectionLPJob extends NVGraphJob {
 	 * @param platformConfig the platform configuration.
 	 * @param inputPath the path to the loaded graph.
 	 */
-	public CommunityDetectionLPJob(RunSpecification runSpecification, NVGraphConfiguration platformConfig,
+	public CommunityDetectionLPJob(RunSpecification runSpecification, NvgraphConfiguration platformConfig,
 								   String inputPath, String outputPath) {
 		super(runSpecification, platformConfig, inputPath, outputPath);
 

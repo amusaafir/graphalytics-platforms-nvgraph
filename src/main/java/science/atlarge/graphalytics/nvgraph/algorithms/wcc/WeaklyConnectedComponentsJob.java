@@ -16,16 +16,16 @@
 package science.atlarge.graphalytics.nvgraph.algorithms.wcc;
 import science.atlarge.graphalytics.execution.RunSpecification;
 import science.atlarge.graphalytics.domain.benchmark.BenchmarkRun;
-import science.atlarge.graphalytics.nvgraph.NVGraphJob;
-import science.atlarge.graphalytics.nvgraph.NVGraphConfiguration;
+import science.atlarge.graphalytics.nvgraph.NvgraphJob;
+import science.atlarge.graphalytics.nvgraph.NvgraphConfiguration;
 
 /**
- * Weakly Connected Components job implementation for NVGraph. This class is responsible for formatting WCC-specific
+ * Weakly Connected Components job implementation for Nvgraph. This class is responsible for formatting WCC-specific
  * arguments to be passed to the platform executable, and does not include the implementation of the algorithm.
  *
  * @author Ahmed
  */
-public final class WeaklyConnectedComponentsJob extends NVGraphJob {
+public final class WeaklyConnectedComponentsJob extends NvgraphJob {
 
 	/**
 	 * Creates a new ConnectedComponentsJob object with all mandatory parameters specified.
@@ -33,7 +33,7 @@ public final class WeaklyConnectedComponentsJob extends NVGraphJob {
 	 * @param platformConfig the platform configuration.
 	 * @param inputPath the path to the input graph.
 	 */
-	public WeaklyConnectedComponentsJob(RunSpecification runSpecification, NVGraphConfiguration platformConfig,
+	public WeaklyConnectedComponentsJob(RunSpecification runSpecification, NvgraphConfiguration platformConfig,
 										String inputPath, String outputPath) {
 		super(runSpecification, platformConfig, inputPath, outputPath);
 

@@ -36,7 +36,7 @@ import java.nio.file.Paths;
  *
  * @author Ahmed
  */
-public abstract class NVGraphJob {
+public abstract class NvgraphJob {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -46,7 +46,7 @@ public abstract class NVGraphJob {
 	private final String inputPath;
 	private final String outputPath;
 
-	protected final NVGraphConfiguration platformConfig;
+	protected final NvgraphConfiguration platformConfig;
 
 	/**
      * Initializes the platform job with its parameters.
@@ -55,7 +55,7 @@ public abstract class NVGraphJob {
 	 * @param inputPath the file path of the input graph dataset.
 	 * @param outputPath the file path of the output graph dataset.
 	 */
-	public NVGraphJob(RunSpecification runSpecification, NVGraphConfiguration platformConfig,
+	public NvgraphJob(RunSpecification runSpecification, NvgraphConfiguration platformConfig,
 		String inputPath, String outputPath) {
 
 		BenchmarkRun benchmarkRun = runSpecification.getBenchmarkRun();

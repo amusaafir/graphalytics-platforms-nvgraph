@@ -27,10 +27,10 @@ set -e
 #fi
 #
 ## Construct the classpath
-#PLATFORM_HOME=$(grep -E "^platform.nvgraph.home[	 ]*[:=]" $config/platform.properties | sed 's/platform.nvgraph.home[\t ]*[:=][\t ]*\([^\t ]*\).*/\1/g' | head -n 1)
+#PLATFORM_HOME=$(grep -E "^platform.Nvgraph.home[	 ]*[:=]" $config/platform.properties | sed 's/platform.Nvgraph.home[\t ]*[:=][\t ]*\([^\t ]*\).*/\1/g' | head -n 1)
 #if [ -z $PLATFORM_HOME ]; then
-#    echo "Error: NVGraph home directory not specified."
-#    echo "Define variable platform.nvgraph.home in $config/platform.properties"
+#    echo "Error: Nvgraph home directory not specified."
+#    echo "Define variable platform.Nvgraph.home in $config/platform.properties"
 #    exit 1
 #fi
 

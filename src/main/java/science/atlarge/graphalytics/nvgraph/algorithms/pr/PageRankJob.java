@@ -19,16 +19,16 @@ import science.atlarge.graphalytics.domain.algorithms.AlgorithmParameters;
 import science.atlarge.graphalytics.domain.algorithms.PageRankParameters;
 import science.atlarge.graphalytics.execution.RunSpecification;
 import science.atlarge.graphalytics.domain.benchmark.BenchmarkRun;
-import science.atlarge.graphalytics.nvgraph.NVGraphJob;
-import science.atlarge.graphalytics.nvgraph.NVGraphConfiguration;
+import science.atlarge.graphalytics.nvgraph.NvgraphJob;
+import science.atlarge.graphalytics.nvgraph.NvgraphConfiguration;
 
 /**
- * Page Rank job implementation for NVGraph. This class is responsible for formatting PR-specific
+ * Page Rank job implementation for Nvgraph. This class is responsible for formatting PR-specific
  * arguments to be passed to the platform executable, and does not include the implementation of the algorithm.
  *
  * @author Ahmed
  */
-public final class PageRankJob extends NVGraphJob {
+public final class PageRankJob extends NvgraphJob {
 
 	private final long iteration;
 	private final float dampingFactor;
@@ -39,7 +39,7 @@ public final class PageRankJob extends NVGraphJob {
 	 * @param platformConfig the platform configuration.
 	 * @param inputPath the path to the loaded graph.
 	 */
-	public PageRankJob(RunSpecification runSpecification, NVGraphConfiguration platformConfig,
+	public PageRankJob(RunSpecification runSpecification, NvgraphConfiguration platformConfig,
 					   String inputPath, String outputPath) {
 		super(runSpecification, platformConfig, inputPath, outputPath);
 

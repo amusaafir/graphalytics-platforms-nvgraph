@@ -28,6 +28,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -77,8 +79,8 @@ public abstract class NvgraphJob {
 	 * @return the exit code
 	 * @throws IOException if the platform failed to run
 	 */
-	public int execute() throws Exception {
-		String executableDir = platformConfig.getExecutablePath();
+	public void execute() throws Exception {
+		/*String executableDir = platformConfig.getExecutablePath();
 		commandLine = new CommandLine(Paths.get(executableDir).toFile());
 
 		// List of benchmark parameters.
@@ -105,7 +107,18 @@ public abstract class NvgraphJob {
 		Executor executor = new DefaultExecutor();
 		executor.setStreamHandler(new PumpStreamHandler(System.out, System.err));
 		executor.setExitValue(0);
-		return executor.execute(commandLine);
+		return executor.execute(commandLine);*/
+
+		List<String> args = new ArrayList<>();
+		//args.add(graphPath);
+		//addJobArguments(args);
+
+		if (outputPath != null) {
+			args.add(outputPath);
+		}
+
+		NvgraphPlatform.runCommand("", NvgraphPlatform.BINARY_DIRECTORY + "/sssp", args);
+
 	}
 
 

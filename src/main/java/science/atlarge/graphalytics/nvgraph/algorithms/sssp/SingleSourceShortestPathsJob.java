@@ -48,12 +48,12 @@ public final class SingleSourceShortestPathsJob extends NvgraphJob {
 
 	@Override
 	protected void appendAlgorithmParameters() {
-
-		commandLine.addArgument("--algorithm");
+		System.out.println("Note: Appending SSSP params!");
+		/*commandLine.addArgument("--algorithm");
 		commandLine.addArgument("sssp");
 
 		commandLine.addArgument("--source-vertex", false);
-		commandLine.addArgument(String.valueOf(sourceVertex), false);
+		commandLine.addArgument(String.valueOf(sourceVertex), false);*/
 	}
 
 }

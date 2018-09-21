@@ -34,8 +34,13 @@ import science.atlarge.graphalytics.nvgraph.algorithms.lcc.LocalClusteringCoeffi
 import science.atlarge.graphalytics.nvgraph.algorithms.pr.PageRankJob;
 import science.atlarge.graphalytics.nvgraph.algorithms.sssp.SingleSourceShortestPathsJob;
 import science.atlarge.graphalytics.nvgraph.algorithms.wcc.WeaklyConnectedComponentsJob;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Nvgraph platform driver for the Graphalytics benchmark.
@@ -48,6 +53,8 @@ public class NvgraphPlatform implements Platform {
 
 	public static final String PLATFORM_NAME = "nvgraph";
 	public NvgraphLoader loader;
+	public static String BINARY_DIRECTORY = "./bin/standard";
+	public static final String MTX_CONVERT_BINARY_NAME = BINARY_DIRECTORY + "/sssp";
 
 	public NvgraphPlatform() {
 
@@ -118,9 +125,12 @@ public class NvgraphPlatform implements Platform {
 		String inputPath = runtimeSetup.getLoadedGraph().getLoadedPath();
 		String outputPath = benchmarkRunSetup.getOutputDir().resolve(benchmarkRun.getName()).toAbsolutePath().toString();
 
+		System.out.println("Note: Loading graph path: " + inputPath);
+		System.out.println("Note: Output path: " + outputPath);
+
 		NvgraphJob job;
 		switch (algorithm) {
-			case BFS:
+			/*case BFS:
 				job = new BreadthFirstSearchJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;
 			case CDLP:
@@ -134,7 +144,7 @@ public class NvgraphPlatform implements Platform {
 				break;
 			case WCC:
 				job = new WeaklyConnectedComponentsJob(runSpecification, platformConfig, inputPath, outputPath);
-				break;
+				break;*/
 			case SSSP:
 				job = new SingleSourceShortestPathsJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;
@@ -147,11 +157,7 @@ public class NvgraphPlatform implements Platform {
 				benchmarkRun.getFormattedGraph().getName());
 
 		try {
-
-			int exitCode = job.execute();
-			if (exitCode != 0) {
-				throw new PlatformExecutionException("Nvgraph exited with an error code: " + exitCode);
-			}
+			job.execute();
 		} catch (Exception e) {
 			throw new PlatformExecutionException("Failed to execute a Nvgraph job.", e);
 		}
@@ -172,6 +178,42 @@ public class NvgraphPlatform implements Platform {
 		metrics.setProcessingTime(NvgraphCollector.collectProcessingTime(logDir));
 		return metrics;
 	}
+
+	public static void runCommand(String format, String binaryName, List<String> args) throws InterruptedException, IOException {
+		String argsString = "";
+		for (String arg: args) {
+			argsString += arg + " ";
+		}
+
+		System.out.println("format = " + format);
+		System.out.println("binaryName = " + binaryName);
+		System.out.println("argsString = " + argsString);
+		String cmd = binaryName + " " + argsString;
+
+		LOG.info("running command: {}", cmd);
+
+		ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
+//		pb.redirectErrorStream(true);
+//		pb.redirectError(Redirect.INHERIT);
+//		pb.redirectOutput(Redirect.INHERIT);
+//		pb.inheritIO();
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
+
+		InputStreamReader isr = new InputStreamReader(process.getInputStream());
+		BufferedReader br = new BufferedReader(isr);
+		String line;
+		while ((line = br.readLine()) != null) {
+			System.out.println(line);
+		}
+
+		int exit = process.waitFor();
+
+		if (exit != 0) {
+			throw new IOException("unexpected error code");
+		}
+	}
+
 
 	@Override
 	public void terminate(RunSpecification runSpecification) throws Exception {

@@ -67,6 +67,7 @@ public class NvgraphCollector {
 	}
 
 	public static BenchmarkMetric collectProcessingTime(Path logPath) throws Exception {
+		System.out.println("Collecting processing time!!!!!!!!!!!!!!");
 		BigDecimal procTime;
 
 		final AtomicLong startTime = new AtomicLong(-1);
@@ -81,6 +82,7 @@ public class NvgraphCollector {
 					while ((line = reader.readLine()) != null) {
 						try {
 							if (line.contains(ProcTimeLog.START_PROC_TIME)) {
+								System.out.println("FOUND PROCESSING TIME!!!!!!!!!!!!!!!!!!!!!!!!");
 								String[] lineParts = line.split("\\s+");
 								startTime.set(Long.parseLong(lineParts[lineParts.length - 1]));
 							}

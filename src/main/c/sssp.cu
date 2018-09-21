@@ -3,6 +3,8 @@
 #include <nvgraph.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include <chrono>
+#include <iostream>
 
 void print_output(float *results, int nvertices);
 
@@ -11,6 +13,11 @@ void check(nvgraphStatus_t status) {
         printf("ERROR : %d\n", status);
         exit(0);
     }
+}
+
+std::string getEpoch() {
+    return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
+        (std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
 // NVIDIA's SSSP implementation using nvGRAPH: https://docs.nvidia.com/cuda/nvgraph/index.html#nvgraph-sssp-example
@@ -49,12 +56,17 @@ int main(int argc, char **argv) {
     check(nvgraphAllocateEdgeData  (handle, graph, edge_numsets, &edge_dimT));
     check(nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0));
 
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::cout << "Processing starts at: " << getEpoch() << std::endl;
+
     // Solve
     int source_vert = 0;
     check(nvgraphSssp(handle, graph, 0,  &source_vert, 0));
 
     // Get and print result
     check(nvgraphGetVertexData(handle, graph, (void*)sssp_1_h, 0));
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Processing ends at: " << getEpoch() << std::endl;
 
     // Clean
     print_output(sssp_1_h, 6);

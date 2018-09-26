@@ -80,7 +80,7 @@ public class NvgraphLoader {
 	}
 
 	public int unload(String loadedInputPath) throws Exception {
-		String unloaderDir = platformConfig.getUnloaderPath();
+		/*String unloaderDir = platformConfig.getUnloaderPath();
 		commandLine = new CommandLine(Paths.get(unloaderDir).toFile());
 
 		commandLine.addArgument("--graph-name");
@@ -94,9 +94,9 @@ public class NvgraphLoader {
 
 		Executor executor = new DefaultExecutor();
 		executor.setStreamHandler(new PumpStreamHandler(System.out, System.err));
-		executor.setExitValue(0);
+		executor.setExitValue(0);*/
 
-		return executor.execute(commandLine);
+		return 0;
 	}
 
 }

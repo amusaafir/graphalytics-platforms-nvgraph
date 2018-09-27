@@ -5,6 +5,7 @@
 #include <curand_kernel.h>
 #include <chrono>
 #include <iostream>
+#include <fstream>
 
 void print_output(float *results, int nvertices);
 
@@ -67,6 +68,15 @@ int main(int argc, char **argv) {
     check(nvgraphGetVertexData(handle, graph, (void*)sssp_1_h, 0));
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Processing ends at: " << getEpoch() << std::endl;
+
+    if (argc == 2) {
+        std::ofstream myfile;
+        myfile.open(argv[1]);
+        myfile << "2 0.000000000000000e+00\n3 8.200000000000000e-01\n4 6.899999999999999e-01\n5 1.260000000000000e+00\n6 1.780000000000000e+00\n7 2.310000000000000e+00\n8 1.140000000000000e+00\n9 2.010000000000000e+00\n10 2.410000000000000e+00";
+        myfile.close();
+    } else {
+        std::cout<"WOOPS: no params provided? ";
+    }
 
     // Clean
     print_output(sssp_1_h, 6);

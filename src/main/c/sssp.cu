@@ -14,6 +14,7 @@ typedef struct CSR_List csr_list;
 
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, char*);
 void print_output(float *results, int nvertices);
+void print_csr(int*, int*);
 
 typedef struct COO_List {
 	int* source;
@@ -185,7 +186,10 @@ int main(int argc, char **argv) {
         COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, argv[1]);
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-        // CSR_List* csr_list = convert_coo_to_csr_format(coo_list->source, coo_list->destination);
+        CSR_List* csr_list = convert_coo_to_csr_format(coo_list->source, coo_list->destination);
+        print_csr(csr_list->offsets, csr_list->indices);
+
+
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";
     }
@@ -260,3 +264,16 @@ void print_output(float *results, int nvertices) {
         printf("%f \n", results[i]);
     }
 }
+
+void print_csr(int* h_offsets, int* h_indices) {
+	printf("\nRow Offsets (Vertex Table):\n");
+	for (int i = 0; i < SIZE_VERTICES + 1; i++) {
+		printf("%d, ", h_offsets[i]);
+	}
+
+	printf("\nColumn Indices (Edge Table):\n");
+	for (int i = 0; i < SIZE_EDGES; i++) {
+		printf("%d, ", h_indices[i]);
+	}
+}
+

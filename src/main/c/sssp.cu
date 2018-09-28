@@ -26,6 +26,11 @@ typedef struct CSR_List {
 	int* indices;
 } CSR_List;
 
+typedef struct CSC_List {
+    int* destination_offsets;
+    int* source_indices;
+} CSC_List;
+
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true)
 {
@@ -121,11 +126,11 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 	return coo_list;
 }
 
-CSR_List* convert_coo_to_csr_format(int* source_vertices, int* target_vertices) {
+CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices) {
 	printf("\nConverting COO to CSR format.");
-	CSR_List* csr_list = (CSR_List*)malloc(sizeof(CSR_List));
-	csr_list->offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
-	csr_list->indices = (int*)malloc(SIZE_EDGES * sizeof(int));
+	CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
+	csc_list->destination_offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
+	csc_list->source_indices = (int*)malloc(SIZE_EDGES * sizeof(int));
 
 	// First setup the COO format from the input (source_vertices and target_vertices array)
 	nvgraphHandle_t handle;
@@ -150,32 +155,32 @@ CSR_List* convert_coo_to_csr_format(int* source_vertices, int* target_vertices) 
 	gpuErrchk(cudaMalloc((void**)&d_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
 	gpuErrchk(cudaMalloc((void**)&d_destination_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
 
-	nvgraphCSRTopology32I_t csrTopology = (nvgraphCSRTopology32I_t)malloc(sizeof(struct nvgraphCSRTopology32I_st));
-	int **d_indices = &(csrTopology->destination_indices);
-	int **d_offsets = &(csrTopology->source_offsets);
+	nvgraphCSCTopology32I_t cscTopology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
+	int **s_indices = &(cscTopology->destination_offsets);
+	int **d_offsets = &(cscTopology->source_indices);
 
-	gpuErrchk(cudaMalloc((void**)d_indices, SIZE_EDGES * sizeof(int)));
+	gpuErrchk(cudaMalloc((void**)s_indices, SIZE_EDGES * sizeof(int)));
 	gpuErrchk(cudaMalloc((void**)d_offsets, (SIZE_VERTICES + 1) * sizeof(int)));
 
-	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSR_32, csrTopology, d_destination_edge_data));
+	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSC_32, csrTopology, d_destination_edge_data));
 
 	gpuErrchk(cudaPeekAtLastError());
 
 	// Copy data to the host (without edge data)
-	gpuErrchk(cudaMemcpy(csr_list->indices, *d_indices, SIZE_EDGES * sizeof(int), cudaMemcpyDeviceToHost));
-	gpuErrchk(cudaMemcpy(csr_list->offsets, *d_offsets, (SIZE_VERTICES + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+	gpuErrchk(cudaMemcpy(csc_list->source_indices, *s_indices, SIZE_EDGES * sizeof(int), cudaMemcpyDeviceToHost));
+	gpuErrchk(cudaMemcpy(csc_list->destination_offsets, *d_offsets, (SIZE_VERTICES + 1) * sizeof(int), cudaMemcpyDeviceToHost));
 
 	// Clean up (Data allocated on device and both topologies, since we only want to work with indices and offsets for now)
-	cudaFree(d_indices);
+	cudaFree(s_indices);
 	cudaFree(d_offsets);
 	cudaFree(d_edge_data);
 	cudaFree(d_destination_edge_data);
 	cudaFree(cooTopology->destination_indices);
 	cudaFree(cooTopology->source_indices);
 	free(cooTopology);
-	free(csrTopology);
+	free(cscTopology);
 
-	return csr_list;
+	return csc_list;
 }
 
 int main(int argc, char **argv) {
@@ -186,9 +191,8 @@ int main(int argc, char **argv) {
         COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, argv[1]);
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-        CSR_List* csr_list = convert_coo_to_csr_format(coo_list->source, coo_list->destination);
-        print_csr(csr_list->offsets, csr_list->indices);
-
+        CSC_List* coo_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination);
+        //todo: print_csc method
 
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";

@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
         CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination);
-        //todo: print_csc method
+        print_csc(csc_list->destination_offsets, csc_list->source_indices);
 
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";
@@ -281,3 +281,14 @@ void print_csr(int* h_offsets, int* h_indices) {
 	}
 }
 
+void print_csc(int* d_offsets, int* s_indices) {
+	printf("\nRow Offsets (Vertex Table):\n");
+	for (int i = 0; i < SIZE_VERTICES + 1; i++) {
+		printf("%d, ", d_offsets[i]);
+	}
+
+	printf("\nColumn Indices (Edge Table):\n");
+	for (int i = 0; i < SIZE_EDGES; i++) {
+		printf("%d, ", s_indices[i]);
+	}
+}

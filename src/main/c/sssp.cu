@@ -162,7 +162,7 @@ CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices) 
 	gpuErrchk(cudaMalloc((void**)s_indices, SIZE_EDGES * sizeof(int)));
 	gpuErrchk(cudaMalloc((void**)d_offsets, (SIZE_VERTICES + 1) * sizeof(int)));
 
-	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSC_32, csrTopology, d_destination_edge_data));
+	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSC_32, cscTopology, d_destination_edge_data));
 
 	gpuErrchk(cudaPeekAtLastError());
 
@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
         COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, argv[1]);
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-        CSC_List* coo_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination);
+        CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination);
         //todo: print_csc method
 
     } else {

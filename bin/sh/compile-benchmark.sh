@@ -37,7 +37,7 @@ set -e
 module load cuda90/toolkit/9.0.176
 
 mkdir bin/standard
-(cd bin/standard && nvcc  -o sssp ../../src/main/c/sssp.cu -lnvgraph)
+(cd bin/standard && nvcc  -o sssp ../../src/main/c/sssp.cu -lnvgraph -std=c++11)
 
 if [ $? -ne 0 ]
 then

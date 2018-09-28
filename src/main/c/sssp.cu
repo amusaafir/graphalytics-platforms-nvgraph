@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
 
 typedef struct COO_List coo_list;
 typedef struct CSR_List csr_list;
@@ -24,6 +25,16 @@ typedef struct CSR_List {
 	int* indices;
 } CSR_List;
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true)
+{
+	if (code != cudaSuccess)
+	{
+		fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+		if (abort) exit(code);
+	}
+}
+
 void check(nvgraphStatus_t status) {
     if (status != NVGRAPH_STATUS_SUCCESS) {
         printf("ERROR : %d\n", status);
@@ -37,6 +48,21 @@ int SIZE_EDGES;
 std::string getEpoch() {
     return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count());
+}
+
+int add_vertex_as_coordinate(std::vector<int>& vertices_type, std::unordered_map<int, int>& map_from_edge_to_coordinate, int vertex, int coordinate) {
+	if (map_from_edge_to_coordinate.count(vertex)) {
+		vertices_type.push_back(map_from_edge_to_coordinate.at(vertex));
+
+		return coordinate;
+	}
+	else {
+		map_from_edge_to_coordinate[vertex] = coordinate;
+		vertices_type.push_back(coordinate);
+		coordinate++;
+
+		return coordinate;
+	}
 }
 
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertices, std::vector<int>& destination_vertices, char* file_path) {
@@ -154,7 +180,7 @@ CSR_List* convert_coo_to_csr_format(int* source_vertices, int* target_vertices) 
 int main(int argc, char **argv) {
     if (argc == 2) {
         std::vector<int> source_vertices;
-        std::vector<int> target_vertices;
+        std::vector<int> destination_vertices;
 
         COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, argv[1]);
 

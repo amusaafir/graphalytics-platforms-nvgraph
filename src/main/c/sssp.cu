@@ -6,8 +6,23 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
+typedef struct COO_List coo_list;
+typedef struct CSR_List csr_list;
+
+COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, char*);
 void print_output(float *results, int nvertices);
+
+typedef struct COO_List {
+	int* source;
+	int* destination;
+} COO_List;
+
+typedef struct CSR_List {
+	int* offsets;
+	int* indices;
+} CSR_List;
 
 void check(nvgraphStatus_t status) {
     if (status != NVGRAPH_STATUS_SUCCESS) {
@@ -16,13 +31,139 @@ void check(nvgraphStatus_t status) {
     }
 }
 
+int SIZE_VERTICES;
+int SIZE_EDGES;
+
 std::string getEpoch() {
     return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
-// NVIDIA's SSSP implementation using nvGRAPH: https://docs.nvidia.com/cuda/nvgraph/index.html#nvgraph-sssp-example
+COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertices, std::vector<int>& destination_vertices, char* file_path) {
+	printf("\nLoading graph file from: %s", file_path);
+
+	FILE* file = fopen(file_path, "r");
+
+	char line[256];
+
+	int current_coordinate = 0;
+
+    std::unordered_map<int, int> map_from_edge_to_coordinate;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (line[0] == '#' || line[0] == '\n') {
+            continue;
+        }
+
+        // Save source and target vertex (temp)
+        int source_vertex;
+        int target_vertex;
+
+        sscanf(line, "%d%d\t", &source_vertex, &target_vertex);
+
+        // Add vertices to the source and target arrays, forming an edge accordingly
+        current_coordinate = add_vertex_as_coordinate(source_vertices, map_from_edge_to_coordinate, source_vertex, current_coordinate);
+        current_coordinate = add_vertex_as_coordinate(destination_vertices, map_from_edge_to_coordinate, target_vertex, current_coordinate);
+    }
+
+    SIZE_VERTICES = map_from_edge_to_coordinate.size();
+    SIZE_EDGES = source_vertices.size();
+
+    printf("\nTotal amount of vertices: %zd", SIZE_VERTICES);
+    printf("\nTotal amount of edges: %zd", SIZE_EDGES);
+
+	COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
+
+	source_vertices.reserve(source_vertices.size());
+	destination_vertices.reserve(destination_vertices.size());
+	coo_list->source = &source_vertices[0];
+	coo_list->destination = &destination_vertices[0];
+
+	if (source_vertices.size() != destination_vertices.size()) {
+		printf("\nThe size of the source vertices does not equal the destination vertices.");
+		exit(1);
+	}
+
+	// Print edges
+	/*for (int i = 0; i < source_vertices.size(); i++) {
+	printf("\n(%d, %d)", coo_list->source[i], coo_list->destination[i]);
+	}*/
+
+	fclose(file);
+
+	return coo_list;
+}
+
+CSR_List* convert_coo_to_csr_format(int* source_vertices, int* target_vertices) {
+	printf("\nConverting COO to CSR format.");
+	CSR_List* csr_list = (CSR_List*)malloc(sizeof(CSR_List));
+	csr_list->offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
+	csr_list->indices = (int*)malloc(SIZE_EDGES * sizeof(int));
+
+	// First setup the COO format from the input (source_vertices and target_vertices array)
+	nvgraphHandle_t handle;
+	nvgraphGraphDescr_t graph;
+	nvgraphCreate(&handle);
+	nvgraphCreateGraphDescr(handle, &graph);
+	nvgraphCOOTopology32I_t cooTopology = (nvgraphCOOTopology32I_t)malloc(sizeof(struct nvgraphCOOTopology32I_st));
+	cooTopology->nedges = SIZE_EDGES;
+	cooTopology->nvertices = SIZE_VERTICES;
+	cooTopology->tag = NVGRAPH_UNSORTED;
+
+	gpuErrchk(cudaMalloc((void**)&cooTopology->source_indices, SIZE_EDGES * sizeof(int)));
+	gpuErrchk(cudaMalloc((void**)&cooTopology->destination_indices, SIZE_EDGES * sizeof(int)));
+
+	gpuErrchk(cudaMemcpy(cooTopology->source_indices, source_vertices, SIZE_EDGES * sizeof(int), cudaMemcpyHostToDevice));
+	gpuErrchk(cudaMemcpy(cooTopology->destination_indices, target_vertices, SIZE_EDGES * sizeof(int), cudaMemcpyHostToDevice));
+
+	// Edge data (allocated, but not used)
+	cudaDataType_t data_type = CUDA_R_32F;
+	float* d_edge_data;
+	float* d_destination_edge_data;
+	gpuErrchk(cudaMalloc((void**)&d_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
+	gpuErrchk(cudaMalloc((void**)&d_destination_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
+
+	nvgraphCSRTopology32I_t csrTopology = (nvgraphCSRTopology32I_t)malloc(sizeof(struct nvgraphCSRTopology32I_st));
+	int **d_indices = &(csrTopology->destination_indices);
+	int **d_offsets = &(csrTopology->source_offsets);
+
+	gpuErrchk(cudaMalloc((void**)d_indices, SIZE_EDGES * sizeof(int)));
+	gpuErrchk(cudaMalloc((void**)d_offsets, (SIZE_VERTICES + 1) * sizeof(int)));
+
+	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSR_32, csrTopology, d_destination_edge_data));
+
+	gpuErrchk(cudaPeekAtLastError());
+
+	// Copy data to the host (without edge data)
+	gpuErrchk(cudaMemcpy(csr_list->indices, *d_indices, SIZE_EDGES * sizeof(int), cudaMemcpyDeviceToHost));
+	gpuErrchk(cudaMemcpy(csr_list->offsets, *d_offsets, (SIZE_VERTICES + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+
+	// Clean up (Data allocated on device and both topologies, since we only want to work with indices and offsets for now)
+	cudaFree(d_indices);
+	cudaFree(d_offsets);
+	cudaFree(d_edge_data);
+	cudaFree(d_destination_edge_data);
+	cudaFree(cooTopology->destination_indices);
+	cudaFree(cooTopology->source_indices);
+	free(cooTopology);
+	free(csrTopology);
+
+	return csr_list;
+}
+
 int main(int argc, char **argv) {
+    if (argc == 2) {
+        std::vector<int> source_vertices;
+        std::vector<int> target_vertices;
+
+        COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, argv[1]);
+
+        // Convert the COO graph into a CSR format (for the in-memory GPU representation)
+        // CSR_List* csr_list = convert_coo_to_csr_format(coo_list->source, coo_list->destination);
+    } else {
+        std::cout<< "Woops: Incorrect nr/values of input params.";
+    }
+    /*
     const size_t  n = 6, nnz = 10, vertex_numsets = 1, edge_numsets = 1;
     float *sssp_1_h;
     void** vertex_dim;
@@ -84,7 +225,7 @@ int main(int argc, char **argv) {
     free(vertex_dimT); free(CSC_input);
     check(nvgraphDestroyGraphDescr(handle, graph));
     check(nvgraphDestroy(handle));
-
+    */
     return 0;
 }
 

@@ -15,6 +15,8 @@ typedef struct CSR_List csr_list;
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, char*);
 void print_output(float *results, int nvertices);
 void print_csr(int*, int*);
+void print_csc(int*, int*);
+
 
 typedef struct COO_List {
 	int* source;
@@ -127,7 +129,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 }
 
 CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices) {
-	printf("\nConverting COO to CSR format.");
+	printf("\nConverting COO to CSC format.");
 	CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
 	csc_list->destination_offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
 	csc_list->source_indices = (int*)malloc(SIZE_EDGES * sizeof(int));

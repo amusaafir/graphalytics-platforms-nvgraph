@@ -15,7 +15,7 @@ typedef struct CSR_List csr_list;
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, std::vector<float>&, char*);
 void print_output(float *results, int nvertices);
 void print_csr(int*, int*);
-void print_csc(int*, int*);
+void print_csc(int*, int*, float*);
 void print_coo(int*, int*, float*);
 
 typedef struct COO_List {

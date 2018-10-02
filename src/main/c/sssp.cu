@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
-#include <nvgraph.h>
 #include <curand.h>
 #include <curand_kernel.h>
 #include <chrono>
@@ -8,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include "nvgraph.h"
 
 typedef struct COO_List coo_list;
 typedef struct CSR_List csr_list;
@@ -138,7 +138,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 	return coo_list;
 }
 
-CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, int* edge_data) {
+CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float* edge_data) {
 	printf("\nConverting COO to CSC format.");
 	CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
 	csc_list->destination_offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
@@ -174,9 +174,9 @@ CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, 
 
 	gpuErrchk(cudaMalloc((void**)s_indices, SIZE_EDGES * sizeof(int)));
 	gpuErrchk(cudaMalloc((void**)d_offsets, (SIZE_VERTICES + 1) * sizeof(int)));
-    printf("\nBefore convert");
-	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, &NVGRAPH_CSC_32, cscTopology, d_destination_edge_data));
-    printf("\nAfter convert");
+        printf("Before convert");
+	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSC_32, cscTopology, d_destination_edge_data));
+        printf("After convert");
 
 	gpuErrchk(cudaPeekAtLastError());
 

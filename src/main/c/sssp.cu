@@ -138,7 +138,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 	return coo_list;
 }
 
-void convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float* edge_data) {
+void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
     print_coo(source_vertices, target_vertices, edge_data);
 
     nvgraphHandle_t handle;
@@ -147,9 +147,9 @@ void convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float
 
     //specifics for the dataset being used
     int nvertices = SIZE_VERTICES, nedges = SIZE_EDGES; //REMEMBER TO CHANGE THIS FOR EVERY NEW FILE
-    int *source_indices_h, *destination_indices_h;
-    float *edge_data_h, *bookmark_h;
-    source_indices_h = (int *)malloc(sizeof(int)*nedges);
+    //int *source_indices_h, *destination_indices_h;
+    //float *edge_data_h, *bookmark_h;
+    //source_indices_h = (int *)malloc(sizeof(int)*nedges);
     //destination_indices_h = (int *)malloc(sizeof(int)*nedges);
     //edge_data_h = (float *)malloc(sizeof(float)*nedges);
     //bookmark_h = (float*)malloc(sizeof(float)*nvertices);
@@ -158,7 +158,7 @@ void convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float
     nvgraphCreate(&handle);
     nvgraphCreateGraphDescr(handle, &graph);
 
-    //col_major_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
+    col_major_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
 
 
 
@@ -187,7 +187,7 @@ void convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float
     //These are needed for compiler issues (the possibility that the initialization is skipped)
     nvgraphCSCTopology32I_t csc_topology;
 
-    csc_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
+    csc_topology = (nvgraphCSCTopology32I_t) col_major_topology;
     indices_d = &(csc_topology->source_indices);
     offsets_d = &(csc_topology->destination_offsets);
 

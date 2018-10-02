@@ -16,7 +16,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<i
 void print_output(float *results, int nvertices);
 void print_csr(int*, int*);
 void print_csc(int*, int*);
-
+void print_coo(int*, int*, float*);
 
 typedef struct COO_List {
 	int* source;
@@ -138,12 +138,19 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 	return coo_list;
 }
 
-CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float* edge_data) {
+void convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float* edge_data) {
+
+
 	printf("\nConverting COO to CSC format.");
-	CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
+	printf("Coo:\n")
+
+
+	print_coo(source_vertices, target_vertices, edge_data);
+
+	/*CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
 	csc_list->destination_offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
 	csc_list->source_indices = (int*)malloc(SIZE_EDGES * sizeof(int));
-
+*/
 	// First setup the COO format from the input (source_vertices and target_vertices array)
 	nvgraphHandle_t handle;
 	nvgraphGraphDescr_t graph;
@@ -181,8 +188,8 @@ CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, 
 	gpuErrchk(cudaPeekAtLastError());
 
 	// Copy data to the host (without edge data)
-	gpuErrchk(cudaMemcpy(csc_list->source_indices, *s_indices, SIZE_EDGES * sizeof(int), cudaMemcpyDeviceToHost));
-	gpuErrchk(cudaMemcpy(csc_list->destination_offsets, *d_offsets, (SIZE_VERTICES + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+	//gpuErrchk(cudaMemcpy(csc_list->source_indices, *s_indices, SIZE_EDGES * sizeof(int), cudaMemcpyDeviceToHost));
+	//gpuErrchk(cudaMemcpy(csc_list->destination_offsets, *d_offsets, (SIZE_VERTICES + 1) * sizeof(int), cudaMemcpyDeviceToHost));
 
 	// Clean up (Data allocated on device and both topologies, since we only want to work with indices and offsets for now)
 	cudaFree(s_indices);
@@ -194,7 +201,7 @@ CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, 
 	free(cooTopology);
 	free(cscTopology);
 
-	return csc_list;
+	//return csc_list;
 }
 
 int main(int argc, char **argv) {
@@ -206,7 +213,7 @@ int main(int argc, char **argv) {
         COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, edge_data, argv[1]);
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-        CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+        /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
         print_csc(csc_list->destination_offsets, csc_list->source_indices);
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";
@@ -305,4 +312,11 @@ void print_csc(int* d_offsets, int* s_indices) {
 	for (int i = 0; i < SIZE_EDGES; i++) {
 		printf("%d, ", s_indices[i]);
 	}
+}
+
+
+void print_coo(int* source, int* target, float* weight) {
+   for (int i = 0 ; i<SIZE_EDGES; i++) {
+        printf("\n(%d,%d) - %f", source[i], target[i], weight[i]);
+   }
 }

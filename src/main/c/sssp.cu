@@ -110,9 +110,9 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
     printf("\nTotal amount of edges: %zd", SIZE_EDGES);
     printf("\nData:");
 
-for(int i = 0 ; i<edge_data.size(); i++) {
-	printf("\n%f", edge_data[i]); 
-}
+    for (int i = 0 ; i<edge_data.size(); i++) {
+        printf("\n%f", edge_data[i]);
+    }
 
 	COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
 
@@ -138,7 +138,7 @@ for(int i = 0 ; i<edge_data.size(); i++) {
 	return coo_list;
 }
 
-CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices) {
+CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices, int* edge_data) {
 	printf("\nConverting COO to CSC format.");
 	CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
 	csc_list->destination_offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
@@ -160,12 +160,13 @@ CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices) 
 	gpuErrchk(cudaMemcpy(cooTopology->source_indices, source_vertices, SIZE_EDGES * sizeof(int), cudaMemcpyHostToDevice));
 	gpuErrchk(cudaMemcpy(cooTopology->destination_indices, target_vertices, SIZE_EDGES * sizeof(int), cudaMemcpyHostToDevice));
 
-	// Edge data (allocated, but not used)
+	// Edge data
 	cudaDataType_t data_type = CUDA_R_32F;
 	float* d_edge_data;
 	float* d_destination_edge_data;
 	gpuErrchk(cudaMalloc((void**)&d_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
 	gpuErrchk(cudaMalloc((void**)&d_destination_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
+	gpuErrchk(cudaMemcpy(d_edge_data, edge_data, SIZE_EDGES*sizeof(float), cudaMemcpyHostToDevice));
 
 	nvgraphCSCTopology32I_t cscTopology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
 	int **s_indices = &(cscTopology->destination_offsets);
@@ -173,8 +174,9 @@ CSC_List* convert_coo_to_csc_format(int* source_vertices, int* target_vertices) 
 
 	gpuErrchk(cudaMalloc((void**)s_indices, SIZE_EDGES * sizeof(int)));
 	gpuErrchk(cudaMalloc((void**)d_offsets, (SIZE_VERTICES + 1) * sizeof(int)));
-
-	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSC_32, cscTopology, d_destination_edge_data));
+    printf("\nBefore convert");
+	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, &NVGRAPH_CSC_32, cscTopology, d_destination_edge_data));
+    printf("\nAfter convert");
 
 	gpuErrchk(cudaPeekAtLastError());
 
@@ -204,7 +206,7 @@ int main(int argc, char **argv) {
         COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, edge_data, argv[1]);
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-        CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination);
+        CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
         print_csc(csc_list->destination_offsets, csc_list->source_indices);
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";

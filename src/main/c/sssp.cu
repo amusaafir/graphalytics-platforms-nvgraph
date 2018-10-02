@@ -158,7 +158,7 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
     nvgraphCreate(&handle);
     nvgraphCreateGraphDescr(handle, &graph);
 
-    col_major_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
+    nvgraphCSCTopology32I_t col_major_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
 
 
 

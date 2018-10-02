@@ -12,7 +12,7 @@
 typedef struct COO_List coo_list;
 typedef struct CSR_List csr_list;
 
-COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, char*);
+COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, std::vector<float>&, char*);
 void print_output(float *results, int nvertices);
 void print_csr(int*, int*);
 void print_csc(int*, int*);
@@ -21,6 +21,7 @@ void print_csc(int*, int*);
 typedef struct COO_List {
 	int* source;
 	int* destination;
+	float* edge_data;
 } COO_List;
 
 typedef struct CSR_List {
@@ -73,7 +74,7 @@ int add_vertex_as_coordinate(std::vector<int>& vertices_type, std::unordered_map
 	}
 }
 
-COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertices, std::vector<int>& destination_vertices, char* file_path) {
+COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertices, std::vector<int>& destination_vertices, std::vector<float>& edge_data, char* file_path) {
 	printf("\nLoading graph file from: %s", file_path);
 
 	FILE* file = fopen(file_path, "r");
@@ -92,12 +93,14 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
         // Save source and target vertex (temp)
         int source_vertex;
         int target_vertex;
+        float edge_weight;
 
-        sscanf(line, "%d%d\t", &source_vertex, &target_vertex);
+        sscanf(line, "%d%d%d\t", &source_vertex, &target_vertex, &edge_weight);
 
         // Add vertices to the source and target arrays, forming an edge accordingly
         current_coordinate = add_vertex_as_coordinate(source_vertices, map_from_edge_to_coordinate, source_vertex, current_coordinate);
         current_coordinate = add_vertex_as_coordinate(destination_vertices, map_from_edge_to_coordinate, target_vertex, current_coordinate);
+        edge_data.push_back(edge_weight);
     }
 
     SIZE_VERTICES = map_from_edge_to_coordinate.size();
@@ -110,8 +113,10 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 
 	source_vertices.reserve(source_vertices.size());
 	destination_vertices.reserve(destination_vertices.size());
+	edge_data.reserve(edge_data.size());
 	coo_list->source = &source_vertices[0];
 	coo_list->destination = &destination_vertices[0];
+	coo_list->edge_data = &edge_data[0];
 
 	if (source_vertices.size() != destination_vertices.size()) {
 		printf("\nThe size of the source vertices does not equal the destination vertices.");
@@ -189,13 +194,13 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         std::vector<int> source_vertices;
         std::vector<int> destination_vertices;
+        std::vector<float> edge_data;
 
-        COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, argv[1]);
+        COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, edge_data, argv[1]);
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
         CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination);
         print_csc(csc_list->destination_offsets, csc_list->source_indices);
-
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";
     }

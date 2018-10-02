@@ -139,69 +139,74 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 }
 
 void convert_coo_to_csc_format(int* source_vertices, int* target_vertices, float* edge_data) {
+    print_coo(source_vertices, target_vertices, edge_data);
+
+    nvgraphHandle_t handle;
+    nvgraphGraphDescr_t graph;
+    cudaDataType_t edge_dimT = CUDA_R_32F;
+
+    //specifics for the dataset being used
+    int nvertices = SIZE_VERTICES, nedges = SIZE_EDGES; //REMEMBER TO CHANGE THIS FOR EVERY NEW FILE
+    int *source_indices_h, *destination_indices_h;
+    float *edge_data_h, *bookmark_h;
+    source_indices_h = (int *)malloc(sizeof(int)*nedges);
+    //destination_indices_h = (int *)malloc(sizeof(int)*nedges);
+    //edge_data_h = (float *)malloc(sizeof(float)*nedges);
+    //bookmark_h = (float*)malloc(sizeof(float)*nvertices);
+
+    //initialization of nvGraph
+    nvgraphCreate(&handle);
+    nvgraphCreateGraphDescr(handle, &graph);
+
+    //col_major_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
 
 
-	printf("\nConverting COO to CSC format.");
-	printf("Coo:\n")
 
 
-	print_coo(source_vertices, target_vertices, edge_data);
+    cudaDataType_t data_type = CUDA_R_32F;
+    //Initialize unconverted topology
+    nvgraphCOOTopology32I_t current_topology = (nvgraphCOOTopology32I_t)malloc(sizeof(struct nvgraphCOOTopology32I_st));
+    current_topology->nedges = nedges;
+    current_topology->nvertices = nvertices;
+    current_topology->tag = NVGRAPH_UNSORTED; //NVGRAPH_UNSORTED, NVGRAPH_SORTED_BY_SOURCE or NVGRAPH_SORTED_BY_DESTINATION can also be used
 
-	/*CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
-	csc_list->destination_offsets = (int*)malloc((SIZE_VERTICES + 1) * sizeof(int));
-	csc_list->source_indices = (int*)malloc(SIZE_EDGES * sizeof(int));
-*/
-	// First setup the COO format from the input (source_vertices and target_vertices array)
-	nvgraphHandle_t handle;
-	nvgraphGraphDescr_t graph;
-	nvgraphCreate(&handle);
-	nvgraphCreateGraphDescr(handle, &graph);
-	nvgraphCOOTopology32I_t cooTopology = (nvgraphCOOTopology32I_t)malloc(sizeof(struct nvgraphCOOTopology32I_st));
-	cooTopology->nedges = SIZE_EDGES;
-	cooTopology->nvertices = SIZE_VERTICES;
-	cooTopology->tag = NVGRAPH_UNSORTED;
+    cudaMalloc((void**)&(current_topology->destination_indices), nedges*sizeof(int));
+    cudaMalloc((void**)&(current_topology->source_indices), nedges*sizeof(int));
 
-	gpuErrchk(cudaMalloc((void**)&cooTopology->source_indices, SIZE_EDGES * sizeof(int)));
-	gpuErrchk(cudaMalloc((void**)&cooTopology->destination_indices, SIZE_EDGES * sizeof(int)));
+    //Copy data into topology
+    cudaMemcpy(current_topology->destination_indices, destination_indices_h, nedges*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(current_topology->source_indices, source_indices_h, nedges*sizeof(int), cudaMemcpyHostToDevice);
 
-	gpuErrchk(cudaMemcpy(cooTopology->source_indices, source_vertices, SIZE_EDGES * sizeof(int), cudaMemcpyHostToDevice));
-	gpuErrchk(cudaMemcpy(cooTopology->destination_indices, target_vertices, SIZE_EDGES * sizeof(int), cudaMemcpyHostToDevice));
+    //Allocate and copy edge data
+    float *edge_data_d, *dst_edge_data_d;
+    cudaMalloc((void**)&edge_data_d, nedges*sizeof(float));
+    cudaMalloc((void**)&dst_edge_data_d, nedges*sizeof(float));
+    cudaMemcpy(edge_data_d, edge_data_h, nedges*sizeof(float), cudaMemcpyHostToDevice);
 
-	// Edge data
-	cudaDataType_t data_type = CUDA_R_32F;
-	float* d_edge_data;
-	float* d_destination_edge_data;
-	gpuErrchk(cudaMalloc((void**)&d_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
-	gpuErrchk(cudaMalloc((void**)&d_destination_edge_data, sizeof(float) * SIZE_EDGES)); // Note: only allocate this for 1 float since we don't have any data yet
-	gpuErrchk(cudaMemcpy(d_edge_data, edge_data, SIZE_EDGES*sizeof(float), cudaMemcpyHostToDevice));
+    int *indices_h, *offsets_h, **indices_d, **offsets_d;
+    //These are needed for compiler issues (the possibility that the initialization is skipped)
+    nvgraphCSCTopology32I_t csc_topology;
 
-	nvgraphCSCTopology32I_t cscTopology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
-	int **s_indices = &(cscTopology->destination_offsets);
-	int **d_offsets = &(cscTopology->source_indices);
+    csc_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
+    indices_d = &(csc_topology->source_indices);
+    offsets_d = &(csc_topology->destination_offsets);
 
-	gpuErrchk(cudaMalloc((void**)s_indices, SIZE_EDGES * sizeof(int)));
-	gpuErrchk(cudaMalloc((void**)d_offsets, (SIZE_VERTICES + 1) * sizeof(int)));
-        printf("Before convert");
-	check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, cooTopology, d_edge_data, &data_type, NVGRAPH_CSC_32, cscTopology, d_destination_edge_data));
-        printf("After convert");
+    cudaMalloc((void**)(indices_d), nedges*sizeof(int));
+    cudaMalloc((void**)(offsets_d), (nvertices + 1)*sizeof(int));
+    indices_h = (int*)malloc(nedges*sizeof(int));
+    offsets_h = (int*)malloc((nvertices + 1)*sizeof(int));
 
-	gpuErrchk(cudaPeekAtLastError());
+    check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, current_topology, edge_data_d, &data_type, NVGRAPH_CSC_32, dst_topology, dst_edge_data_d));
 
-	// Copy data to the host (without edge data)
-	//gpuErrchk(cudaMemcpy(csc_list->source_indices, *s_indices, SIZE_EDGES * sizeof(int), cudaMemcpyDeviceToHost));
-	//gpuErrchk(cudaMemcpy(csc_list->destination_offsets, *d_offsets, (SIZE_VERTICES + 1) * sizeof(int), cudaMemcpyDeviceToHost));
+    //Copy converted topology from device to host
+    cudaMemcpy(indices_h, *indices_d, nedges*sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(offsets_h, *offsets_d, (nvertices + 1)*sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(edge_data_h, dst_edge_data_d, nedges*sizeof(float), cudaMemcpyDeviceToHost);
 
-	// Clean up (Data allocated on device and both topologies, since we only want to work with indices and offsets for now)
-	cudaFree(s_indices);
-	cudaFree(d_offsets);
-	cudaFree(d_edge_data);
-	cudaFree(d_destination_edge_data);
-	cudaFree(cooTopology->destination_indices);
-	cudaFree(cooTopology->source_indices);
-	free(cooTopology);
-	free(cscTopology);
+    //bookmark..
+    //free mem..
+    //copy data back to host
 
-	//return csc_list;
 }
 
 int main(int argc, char **argv) {
@@ -214,7 +219,7 @@ int main(int argc, char **argv) {
 
         // Convert the COO graph into a CSR format (for the in-memory GPU representation)
         /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
-        print_csc(csc_list->destination_offsets, csc_list->source_indices);
+        //print_csc(csc_list->destination_offsets, csc_list->source_indices);
     } else {
         std::cout<< "Woops: Incorrect nr/values of input params.";
     }

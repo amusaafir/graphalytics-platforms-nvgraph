@@ -203,6 +203,8 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
     cudaMemcpy(offsets_h, *offsets_d, (nvertices + 1)*sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(edge_data_h, dst_edge_data_d, nedges*sizeof(float), cudaMemcpyDeviceToHost);
 
+    print_csc(offsets_h, indices_h, edge_data_h);
+
     //bookmark..
     //free mem..
     //copy data back to host
@@ -307,7 +309,7 @@ void print_csr(int* h_offsets, int* h_indices) {
 	}
 }
 
-void print_csc(int* d_offsets, int* s_indices) {
+void print_csc(int* d_offsets, int* s_indices, float* weight) {
 	printf("\nRow Offsets (Vertex Table):\n");
 	for (int i = 0; i < SIZE_VERTICES + 1; i++) {
 		printf("%d, ", d_offsets[i]);
@@ -317,6 +319,12 @@ void print_csc(int* d_offsets, int* s_indices) {
 	for (int i = 0; i < SIZE_EDGES; i++) {
 		printf("%d, ", s_indices[i]);
 	}
+
+	printf("\nEdge weight:\n");
+	for (int i = 0; i < SIZE_EDGES; i++) {
+        printf("%f, ", weight[i]);
+    }
+
 }
 
 

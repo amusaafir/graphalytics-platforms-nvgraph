@@ -95,7 +95,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
         int target_vertex;
         float edge_weight;
 
-        sscanf(line, "%d%d%d\t", &source_vertex, &target_vertex, &edge_weight);
+        sscanf(line, "%d%d%f\t", &source_vertex, &target_vertex, &edge_weight);
 
         // Add vertices to the source and target arrays, forming an edge accordingly
         current_coordinate = add_vertex_as_coordinate(source_vertices, map_from_edge_to_coordinate, source_vertex, current_coordinate);
@@ -108,6 +108,11 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 
     printf("\nTotal amount of vertices: %zd", SIZE_VERTICES);
     printf("\nTotal amount of edges: %zd", SIZE_EDGES);
+    printf("\nData:");
+
+for(int i = 0 ; i<edge_data.size(); i++) {
+	printf("\n%f", edge_data[i]); 
+}
 
 	COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
 

@@ -139,7 +139,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertice
 }
 
 void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
-    print_coo(source_vertices, target_vertices, edge_data);
+    print_coo(source_indices_h, destination_indices_h, edge_data_h);
 
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
@@ -196,7 +196,7 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
     indices_h = (int*)malloc(nedges*sizeof(int));
     offsets_h = (int*)malloc((nvertices + 1)*sizeof(int));
 
-    check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, current_topology, edge_data_d, &data_type, NVGRAPH_CSC_32, dst_topology, dst_edge_data_d));
+    check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, current_topology, edge_data_d, &data_type, NVGRAPH_CSC_32, col_major_topology, dst_edge_data_d));
 
     //Copy converted topology from device to host
     cudaMemcpy(indices_h, *indices_d, nedges*sizeof(int), cudaMemcpyDeviceToHost);

@@ -257,12 +257,12 @@ int main(int argc, char **argv) {
     std::vector<int> destination_vertices_vect;
     std::vector<float> edge_data_vect;
 
-    COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, target_vertices, edge_data, argv[1]);
+    COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices_vect, destination_vertices_vect, edge_data_vect, argv[1]);
 
     printf("YAY: %d", coo_list->source[0]);
 
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-    /*CSC_List* csc_list = */convert_coo_to_csc_format(source_vertices, target_vertices, edge_data);
+    /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
     //print_csc(csc_list->destination_offsets, csc_list->source_indices);
 
     /*

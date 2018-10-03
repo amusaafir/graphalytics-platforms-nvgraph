@@ -101,7 +101,7 @@ void save_input_file_as_coo(std::vector<int>& source_vertices_vect, std::vector<
 }
 
 
-COO_List* load_graph_from_edge_list_file_to_coo(char* file_path) {
+void load_graph_from_edge_list_file_to_coo(int* source_vertices, int* target_vertices, float* edge_data, char* file_path) {
     printf("\nLoading graph file from: %s to COO", file_path);
 
     std::vector<int> source_vertices_vect;
@@ -162,10 +162,10 @@ COO_List* load_graph_from_edge_list_file_to_coo(char* file_path) {
     //int* destination_vertices = &destination_vertices_vect[0];
     //float* edge_data = &edge_data_vect[0];
 
-    COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
-    coo_list->source = &source_vertices_vect[0];
-    coo_list->destination = &destination_vertices_vect[0];
-    coo_list->edge_data = &edge_data_vect[0];
+    //COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
+    source_vertices = &source_vertices_vect[0];
+    target_vertices = &destination_vertices_vect[0];
+    edge_data = &edge_data_vect[0];
     /*
     for (std::unordered_map<int, int>::const_iterator it = map_from_coordinate_to_vertex.begin(); it != map_from_coordinate_to_vertex.end(); it++) {
     	printf("coordinate: %d, vertex: %d\n", it->first, it->second);
@@ -177,7 +177,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(char* file_path) {
         printf("\n(%d, %d - %f)", source_vertices[i], destination_vertices[i], edge_data[i]);
     }*/
 
-    return coo_list;
+   // return coo_list;
 }
 
 void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
@@ -252,15 +252,19 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
 int main(int argc, char **argv) {
 
     IS_GRAPH_UNDIRECTED = strtol(argv[2], NULL, 10);
-    source_vertex = strtol(argv[3], NULL, 10);
+    SSSP_SOURCE_VERTEX = strtol(argv[3], NULL, 10);
     std::cout << "Input graph path: " << argv[1] << "\n";
     std::cout << "Is undirected: " << IS_GRAPH_UNDIRECTED << "\n";
-    std::cout << "Source vertex: " << source_vertex << "\n";
+    std::cout << "Source vertex: " << SSSP_SOURCE_VERTEX << "\n";
 
-    COO_List* coo_list = load_graph_from_edge_list_file_to_coo(argv[1]);
+    int* source_vertices;
+    int* target_vertices;
+    float* edge_data;
+
+    /*COO_List* coo_list = */load_graph_from_edge_list_file_to_coo(source_vertices, target_vertices, edge_data, argv[1]);
 
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-    /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+    /*CSC_List* csc_list = */convert_coo_to_csc_format(source_vertices, target_vertices, edge_data);
     //print_csc(csc_list->destination_offsets, csc_list->source_indices);
 
     /*

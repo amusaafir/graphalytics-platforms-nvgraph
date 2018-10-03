@@ -9,6 +9,12 @@
 #include <unordered_map>
 #include "nvgraph.h"
 
+#include <unordered_map>
+#include <unordered_set>
+
+#include <stdlib.h>
+
+
 typedef struct COO_List coo_list;
 typedef struct CSR_List csr_list;
 
@@ -104,11 +110,17 @@ void save_input_file_as_coo(std::vector<int>& source_vertices_vect, std::vector<
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices_vect, std::vector<int> destination_vertices_vect, std::vector<float> edge_data_vect, char* file_path) {
     printf("\nLoading graph file from: %s to COO", file_path);
 
-    int current_coordinate = 0;
-    std::unordered_map<int, int> map_from_vertex_to_coordinate;
 
     FILE* file = fopen(file_path, "r");
+
     char line[256];
+
+    int current_coordinate = 0;
+
+    std::unordered_map<int, int> map_from_vertex_to_coordinate;
+
+
+
 
     while (fgets(line, sizeof(line), file)) {
         if (line[0] == '#' || line[0] == '\n') {
@@ -160,23 +172,48 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
 
     COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
 
-    source_vertices_vect.reserve(source_vertices_vect.size());
-    destination_vertices_vect.reserve(destination_vertices_vect.size());
-    edge_data_vect.reserve(edge_data_vect.size());
+    //source_vertices_vect.reserve(source_vertices_vect.size());
+    //destination_vertices_vect.reserve(destination_vertices_vect.size());
+    //edge_data_vect.reserve(edge_data_vect.size());
 
-    coo_list->source = &source_vertices_vect[0];
-    coo_list->destination = &destination_vertices_vect[0];
-    coo_list->edge_data = &edge_data_vect[0];
+
+
+//    coo_list->source = &source_vertices_vect[0];
+  //  coo_list->destination = &destination_vertices_vect[0];
+   // coo_list->edge_data = &edge_data_vect[0];
     /*
     for (std::unordered_map<int, int>::const_iterator it = map_from_coordinate_to_vertex.begin(); it != map_from_coordinate_to_vertex.end(); it++) {
     	printf("coordinate: %d, vertex: %d\n", it->first, it->second);
 	}
+*/
+    printf("Printing source & destination edges (vect)");
 
-    printf("Printing source & destination edges (non-vect)");
+for (int i = 0; i < SIZE_EDGES; i++) {
+
+
+
+
+             printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
+    }
+
+
+
+int* source_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
+int* destination_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
+float* edge_data_arr = (float*) malloc(sizeof(float) * SIZE_EDGES);
 
     for (int i = 0; i < SIZE_EDGES; i++) {
-        printf("\n(%d, %d - %f)", source_vertices[i], destination_vertices[i], edge_data[i]);
-    }*/
+              source_arr[i] = source_vertices_vect[i];
+    destination_arr[i] = destination_vertices_vect[i];
+    edge_data_arr[i] = edge_data_vect[i];
+
+//             printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
+    }
+
+coo_list->source = source_arr;
+coo_list->destination = destination_arr;
+coo_list->edge_data = edge_data_arr;
+
 
     return coo_list;
 }
@@ -264,8 +301,8 @@ int main(int argc, char **argv) {
 
     COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices_vect, destination_vertices_vect, edge_data_vect, argv[1]);
 
-    printf("YAY: %d", coo_list->source[0]);
-
+    //printf("YAY: %d", coo_list->source[0]);
+	//print_coo(coo_list->source, coo_list->destination, coo_list->edge_data);
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
     /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
     //print_csc(csc_list->destination_offsets, csc_list->source_indices);
@@ -373,7 +410,8 @@ void print_csc(int* d_offsets, int* s_indices, float* weight) {
 }
 
 void print_coo(int* source, int* target, float* weight) {
-    for (int i = 0 ; i<SIZE_EDGES; i++) {
+ printf("\n printing COO\n"); 
+   for (int i = 0 ; i<SIZE_EDGES; i++) {
         printf("\n(%d,%d) - %f", source[i], target[i], weight[i]);
     }
 }

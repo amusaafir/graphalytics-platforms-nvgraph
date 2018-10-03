@@ -12,7 +12,6 @@
 typedef struct COO_List coo_list;
 typedef struct CSR_List csr_list;
 
-COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>&, std::vector<int>&, std::vector<float>&, char*);
 void print_output(float *results, int nvertices);
 void print_csr(int*, int*);
 void print_csc(int*, int*, float*);
@@ -53,89 +52,132 @@ void check(nvgraphStatus_t status) {
 
 int SIZE_VERTICES;
 int SIZE_EDGES;
+int IS_GRAPH_UNDIRECTED;
+int SSSP_SOURCE_VERTEX = -1;
+std::unordered_map<int, int> map_from_coordinate_to_vertex; // Required for validation
 
 std::string getEpoch() {
     return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
-int add_vertex_as_coordinate(std::vector<int>& vertices_type, std::unordered_map<int, int>& map_from_edge_to_coordinate, int vertex, int coordinate) {
-	if (map_from_edge_to_coordinate.count(vertex)) {
-		vertices_type.push_back(map_from_edge_to_coordinate.at(vertex));
+int add_vertex_as_coordinate(std::vector<int>& vertices_type, std::unordered_map<int, int>& map_from_vertex_to_coordinate, std::unordered_map<int, int>& map_from_coordinate_to_vertex, int vertex, int coordinate) {
+    if (map_from_vertex_to_coordinate.count(vertex)) {
+        vertices_type.push_back(map_from_vertex_to_coordinate.at(vertex));
 
-		return coordinate;
-	}
-	else {
-		map_from_edge_to_coordinate[vertex] = coordinate;
-		vertices_type.push_back(coordinate);
-		coordinate++;
+        return coordinate;
+    } else {
+        map_from_vertex_to_coordinate[vertex] = coordinate;
+        vertices_type.push_back(coordinate);
 
-		return coordinate;
-	}
+    	if (vertex == SSSP_SOURCE_VERTEX) {
+    		printf("\n The source COO vertex = %d\n",  coordinate);
+    	}
+
+        map_from_coordinate_to_vertex[coordinate] = vertex;
+
+        coordinate++;
+
+        return coordinate;
+    }
 }
 
-COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int>& source_vertices, std::vector<int>& destination_vertices, std::vector<float>& edge_data, char* file_path) {
-	printf("\nLoading graph file from: %s", file_path);
+void save_input_file_as_coo(std::vector<int>& source_vertices_vect, std::vector<int>& destination_vertices_vect, std::vector<float>& edge_data_vect, char* save_path) {
+    printf("\nWriting results to output file.");
 
-	FILE* file = fopen(file_path, "r");
+    char* file_path = save_path;
+    FILE *output_file = fopen(file_path, "w");
 
-	char line[256];
+    if (output_file == NULL) {
+        printf("\nError writing results to output file.");
+        exit(1);
+    }
 
-	int current_coordinate = 0;
+    for (int i = 0; i < source_vertices_vect.size(); i++) {
+        fprintf(output_file, "%d\t%d\t%f\n", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
+    }
 
-    std::unordered_map<int, int> map_from_edge_to_coordinate;
+    fclose(output_file);
+}
+
+
+COO_List* load_graph_from_edge_list_file_to_coo(char* file_path) {
+    printf("\nLoading graph file from: %s to COO", file_path);
+
+    std::vector<int> source_vertices_vect;
+    std::vector<int> destination_vertices_vect;
+    std::vector<float> edge_data_vect;
+
+    int current_coordinate = 0;
+    std::unordered_map<int, int> map_from_vertex_to_coordinate;
+
+    FILE* file = fopen(file_path, "r");
+    char line[256];
 
     while (fgets(line, sizeof(line), file)) {
         if (line[0] == '#' || line[0] == '\n') {
+            //print_debug_log("\nEscaped a comment.");
             continue;
         }
 
-        // Save source and target vertex (temp)
+        // Save source, destination and weight
         int source_vertex;
         int target_vertex;
-        float edge_weight;
+        float weight;
 
-        sscanf(line, "%d%d%f\t", &source_vertex, &target_vertex, &edge_weight);
+        sscanf(line, "%d%d%f\t", &source_vertex, &target_vertex, &weight);
 
         // Add vertices to the source and target arrays, forming an edge accordingly
-        current_coordinate = add_vertex_as_coordinate(source_vertices, map_from_edge_to_coordinate, source_vertex, current_coordinate);
-        current_coordinate = add_vertex_as_coordinate(destination_vertices, map_from_edge_to_coordinate, target_vertex, current_coordinate);
-        edge_data.push_back(edge_weight);
+        current_coordinate = add_vertex_as_coordinate(source_vertices_vect, map_from_vertex_to_coordinate, map_from_coordinate_to_vertex, source_vertex, current_coordinate);
+        current_coordinate = add_vertex_as_coordinate(destination_vertices_vect, map_from_vertex_to_coordinate, map_from_coordinate_to_vertex, target_vertex, current_coordinate);
+
+        edge_data_vect.push_back(weight);
+
+
+        // Add the end vertices but swap places this time (undirected)
+        if (IS_GRAPH_UNDIRECTED) {
+            current_coordinate = add_vertex_as_coordinate(source_vertices_vect, map_from_vertex_to_coordinate, map_from_coordinate_to_vertex, target_vertex, current_coordinate);
+            current_coordinate = add_vertex_as_coordinate(destination_vertices_vect, map_from_vertex_to_coordinate, map_from_coordinate_to_vertex, source_vertex, current_coordinate);
+
+            edge_data_vect.push_back(weight);
+        }
     }
 
-    SIZE_VERTICES = map_from_edge_to_coordinate.size();
-    SIZE_EDGES = source_vertices.size();
+    fclose(file);
+
+    SIZE_VERTICES = map_from_vertex_to_coordinate.size();
+    SIZE_EDGES = source_vertices_vect.size();
 
     printf("\nTotal amount of vertices: %zd", SIZE_VERTICES);
     printf("\nTotal amount of edges: %zd", SIZE_EDGES);
-    printf("\nData:");
 
-    for (int i = 0 ; i<edge_data.size(); i++) {
-        printf("\n%f", edge_data[i]);
+    if (source_vertices_vect.size() != destination_vertices_vect.size()) {
+        printf("\nThe size of the source vertices does not equal the destination vertices.");
+        exit(1);
     }
 
-	COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
+    //save_input_file_as_coo(source_vertices_vect, destination_vertices_vect,edge_data_vect, save_path);
 
-	source_vertices.reserve(source_vertices.size());
-	destination_vertices.reserve(destination_vertices.size());
-	edge_data.reserve(edge_data.size());
-	coo_list->source = &source_vertices[0];
-	coo_list->destination = &destination_vertices[0];
-	coo_list->edge_data = &edge_data[0];
+    //int* source_vertices = &source_vertices_vect[0];
+    //int* destination_vertices = &destination_vertices_vect[0];
+    //float* edge_data = &edge_data_vect[0];
 
-	if (source_vertices.size() != destination_vertices.size()) {
-		printf("\nThe size of the source vertices does not equal the destination vertices.");
-		exit(1);
+    COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
+    coo_list->source = &source_vertices_vect[0];
+    coo_list->destination = &destination_vertices_vect[0];
+    coo_list->edge_data = &edge_data_vect[0];
+    /*
+    for (std::unordered_map<int, int>::const_iterator it = map_from_coordinate_to_vertex.begin(); it != map_from_coordinate_to_vertex.end(); it++) {
+    	printf("coordinate: %d, vertex: %d\n", it->first, it->second);
 	}
 
-	// Print edges
-	/*for (int i = 0; i < source_vertices.size(); i++) {
-	printf("\n(%d, %d)", coo_list->source[i], coo_list->destination[i]);
-	}*/
+    printf("Printing source & destination edges (non-vect)");
 
-	fclose(file);
+    for (int i = 0; i < SIZE_EDGES; i++) {
+        printf("\n(%d, %d - %f)", source_vertices[i], destination_vertices[i], edge_data[i]);
+    }*/
 
-	return coo_list;
+    return coo_list;
 }
 
 void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
@@ -159,9 +201,6 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
     nvgraphCreateGraphDescr(handle, &graph);
 
     nvgraphCSCTopology32I_t col_major_topology = (nvgraphCSCTopology32I_t)malloc(sizeof(struct nvgraphCSCTopology32I_st));
-
-
-
 
     cudaDataType_t data_type = CUDA_R_32F;
     //Initialize unconverted topology
@@ -208,23 +247,22 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
     //bookmark..
     //free mem..
     //copy data back to host
-
 }
 
 int main(int argc, char **argv) {
-    if (argc == 2) {
-        std::vector<int> source_vertices;
-        std::vector<int> destination_vertices;
-        std::vector<float> edge_data;
 
-        COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices, destination_vertices, edge_data, argv[1]);
+    IS_GRAPH_UNDIRECTED = strtol(argv[2], NULL, 10);
+    source_vertex = strtol(argv[3], NULL, 10);
+    std::cout << "Input graph path: " << argv[1] << "\n";
+    std::cout << "Is undirected: " << IS_GRAPH_UNDIRECTED << "\n";
+    std::cout << "Source vertex: " << source_vertex << "\n";
 
-        // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-        /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
-        //print_csc(csc_list->destination_offsets, csc_list->source_indices);
-    } else {
-        std::cout<< "Woops: Incorrect nr/values of input params.";
-    }
+    COO_List* coo_list = load_graph_from_edge_list_file_to_coo(argv[1]);
+
+    // Convert the COO graph into a CSR format (for the in-memory GPU representation)
+    /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+    //print_csc(csc_list->destination_offsets, csc_list->source_indices);
+
     /*
     const size_t  n = 6, nnz = 10, vertex_numsets = 1, edge_numsets = 1;
     float *sssp_1_h;
@@ -327,9 +365,8 @@ void print_csc(int* d_offsets, int* s_indices, float* weight) {
 
 }
 
-
 void print_coo(int* source, int* target, float* weight) {
-   for (int i = 0 ; i<SIZE_EDGES; i++) {
+    for (int i = 0 ; i<SIZE_EDGES; i++) {
         printf("\n(%d,%d) - %f", source[i], target[i], weight[i]);
-   }
+    }
 }

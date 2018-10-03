@@ -159,6 +159,11 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
     //float* edge_data = &edge_data_vect[0];
 
     COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
+
+    source_vertices_vect.reserve(source_vertices_vect.size());
+    destination_vertices_vect.reserve(destination_vertices_vect.size());
+    edge_data_vect.reserve(edge_data_vect.size());
+
     coo_list->source = &source_vertices_vect[0];
     coo_list->destination = &destination_vertices_vect[0];
     coo_list->edge_data = &edge_data_vect[0];

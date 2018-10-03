@@ -159,9 +159,9 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
     //float* edge_data = &edge_data_vect[0];
 
     COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
-    source_vertices = &source_vertices_vect[0];
-    target_vertices = &destination_vertices_vect[0];
-    edge_data = &edge_data_vect[0];
+    coo_list->source = &source_vertices_vect[0];
+    coo_list->destination = &destination_vertices_vect[0];
+    coo_list->edge_data = &edge_data_vect[0];
     /*
     for (std::unordered_map<int, int>::const_iterator it = map_from_coordinate_to_vertex.begin(); it != map_from_coordinate_to_vertex.end(); it++) {
     	printf("coordinate: %d, vertex: %d\n", it->first, it->second);

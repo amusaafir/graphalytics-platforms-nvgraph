@@ -78,7 +78,8 @@ int add_vertex_as_coordinate(std::vector<int>& vertices_type, std::unordered_map
         vertices_type.push_back(coordinate);
 
     	if (vertex == SSSP_SOURCE_VERTEX) {
-    		printf("\n The source COO vertex = %d\n",  coordinate);
+    	     SSSP_SOURCE_VERTEX = coordinate;	
+             printf("\n The source COO vertex = %d\n",  coordinate);
     	}
 
         map_from_coordinate_to_vertex[coordinate] = vertex;
@@ -170,17 +171,17 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
     }
 
     fclose(file);
-
+/*
 printf("The source vertices vect size is\n");
 
 
 for(auto it = map_from_vertex_to_coordinate.cbegin(); it != map_from_vertex_to_coordinate.cend(); ++it)
-{
+{a
     std::cout << it->first << " " << it->second << "\n";
 }
 
 printf("---------");
-
+*/
 
     SIZE_VERTICES = map_from_vertex_to_coordinate.size();
     SIZE_EDGES = source_vertices_vect.size();
@@ -193,7 +194,7 @@ printf("---------");
         exit(1);
     }
 
-    //save_input_file_as_coo(source_vertices_vect, destination_vertices_vect,edge_data_vect, save_path);
+    save_input_file_as_coo(source_vertices_vect, destination_vertices_vect,edge_data_vect, "/var/scratch/musaafir/graphalytics-platforms-nvgraph/src/main/c/coo_save.txt");
 
     //int* source_vertices = &source_vertices_vect[0];
     //int* destination_vertices = &destination_vertices_vect[0];
@@ -214,14 +215,14 @@ printf("---------");
     for (std::unordered_map<int, int>::const_iterator it = map_from_coordinate_to_vertex.begin(); it != map_from_coordinate_to_vertex.end(); it++) {
     	printf("coordinate: %d, vertex: %d\n", it->first, it->second);
 	}
-*/
+*//*
     printf("Printing source & destination edges (vect)");
 
     for (int i = 0; i < SIZE_EDGES; i++) {
         printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
     }
 
-
+*/
 
     int* source_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
     int* destination_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
@@ -244,7 +245,7 @@ printf("---------");
 }
 
 CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
-    print_coo(source_indices_h, destination_indices_h, edge_data_h);
+   // print_coo(source_indices_h, destination_indices_h, edge_data_h);
 
     nvgraphHandle_t handle;
     nvgraphGraphDescr_t graph;
@@ -271,18 +272,22 @@ CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indi
     current_topology->nedges = nedges;
     current_topology->nvertices = nvertices;
     current_topology->tag = NVGRAPH_UNSORTED; //NVGRAPH_UNSORTED, NVGRAPH_SORTED_BY_SOURCE or NVGRAPH_SORTED_BY_DESTINATION can also be used
-
+printf("\nCHECK 1");
     cudaMalloc((void**)&(current_topology->destination_indices), nedges*sizeof(int));
-    cudaMalloc((void**)&(current_topology->source_indices), nedges*sizeof(int));
-
+  
+ printf("\nCHECK 2");
+  cudaMalloc((void**)&(current_topology->source_indices), nedges*sizeof(int));
+printf("\ncheck 3");
     //Copy data into topology
     cudaMemcpy(current_topology->destination_indices, destination_indices_h, nedges*sizeof(int), cudaMemcpyHostToDevice);
+printf("\nCheck 4");
     cudaMemcpy(current_topology->source_indices, source_indices_h, nedges*sizeof(int), cudaMemcpyHostToDevice);
-
+printf("\ncheck 5");
     //Allocate and copy edge data
     float *edge_data_d, *dst_edge_data_d;
     cudaMalloc((void**)&edge_data_d, nedges*sizeof(float));
-    cudaMalloc((void**)&dst_edge_data_d, nedges*sizeof(float));
+printf("\nCheck 6");    
+cudaMalloc((void**)&dst_edge_data_d, nedges*sizeof(float));
     cudaMemcpy(edge_data_d, edge_data_h, nedges*sizeof(float), cudaMemcpyHostToDevice);
 
     int *indices_h, *offsets_h, **indices_d, **offsets_d;
@@ -292,19 +297,21 @@ CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indi
     csc_topology = (nvgraphCSCTopology32I_t) col_major_topology;
     indices_d = &(csc_topology->source_indices);
     offsets_d = &(csc_topology->destination_offsets);
-
+printf("\ncheck 7");
     cudaMalloc((void**)(indices_d), nedges*sizeof(int));
-    cudaMalloc((void**)(offsets_d), (nvertices + 1)*sizeof(int));
+   
+ printf("\ncheck 8");
+  cudaMalloc((void**)(offsets_d), (nvertices + 1)*sizeof(int));
     indices_h = (int*)malloc(nedges*sizeof(int));
     offsets_h = (int*)malloc((nvertices + 1)*sizeof(int));
-
+printf("\ncheck 8.3");
     check(nvgraphConvertTopology(handle, NVGRAPH_COO_32, current_topology, edge_data_d, &data_type, NVGRAPH_CSC_32, col_major_topology, dst_edge_data_d));
-
+printf("check 8.5");
     //Copy converted topology from device to host
     cudaMemcpy(indices_h, *indices_d, nedges*sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(offsets_h, *offsets_d, (nvertices + 1)*sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(edge_data_h, dst_edge_data_d, nedges*sizeof(float), cudaMemcpyDeviceToHost);
-
+printf("\ncheck 9");
    // print_csc(offsets_h, indices_h, edge_data_h);
 
      CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
@@ -312,6 +319,14 @@ CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indi
      csc_list->source_indices = indices_h;
      csc_list->edge_data = edge_data_h;
 
+
+     cudaFree(indices_d);
+     cudaFree(offsets_d);
+     cudaFree(dst_edge_data_d);
+     cudaFree(edge_data_d);
+     cudaFree(current_topology->source_indices);
+     cudaFree(current_topology->destination_indices);
+      free(current_topology);
 
     return csc_list;
     //bookmark..
@@ -331,9 +346,13 @@ float* sssp(int* source_indices, int* destination_offsets, float* weights) {
     cudaDataType_t edge_dimT = CUDA_R_32F;
     cudaDataType_t* vertex_dimT;
     // Init host data
+    printf("\nCHECK 1000");
     sssp_1_h = (float*)malloc(n*sizeof(float));
+    printf("\nCHECK 2000");
     vertex_dim  = (void**)malloc(vertex_numsets*sizeof(void*));
+    printf("\nCHECK 3000");
     vertex_dimT = (cudaDataType_t*)malloc(vertex_numsets*sizeof(cudaDataType_t));
+    printf("\nCHECK 4000");
     CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
     vertex_dim[0]= (void*)sssp_1_h; vertex_dimT[0] = CUDA_R_32F;
     //float weights_h[] = {0.333333, 0.5, 0.333333, 0.5, 0.5, 1.0, 0.333333, 0.5, 0.5, 0.5};
@@ -345,13 +364,15 @@ float* sssp(int* source_indices, int* destination_offsets, float* weights) {
     CSC_input->destination_offsets = destination_offsets;
     CSC_input->source_indices = source_indices;
     // Set graph connectivity and properties (tranfers)
+    printf("\nCHECK 5000");
     check(nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32));
-    check(nvgraphAllocateVertexData(handle, graph, vertex_numsets, vertex_dimT));
-    check(nvgraphAllocateEdgeData  (handle, graph, edge_numsets, &edge_dimT));
-    check(nvgraphSetEdgeData(handle, graph, (void*)weights, 0));
+    printf("\nCHECK 5001");check(nvgraphAllocateVertexData(handle, graph, vertex_numsets, vertex_dimT));
+    printf("\nCHECK 5002");check(nvgraphAllocateEdgeData  (handle, graph, edge_numsets, &edge_dimT));
+    printf("\n CHECK 5003");check(nvgraphSetEdgeData(handle, graph, (void*)weights, 0));
     // Solve
-    int source_vert = 0;
-    check(nvgraphSssp(handle, graph, 0,  &source_vert, 0));
+    //int source_vert = 0;
+    printf("\nCHECK 6000");
+    check(nvgraphSssp(handle, graph, 0,  &SSSP_SOURCE_VERTEX, 0));
     // Get and print result
     check(nvgraphGetVertexData(handle, graph, (void*)sssp_1_h, 0));
     printf("\nDone with sssp");
@@ -385,11 +406,13 @@ int main(int argc, char **argv) {
 	//print_coo(coo_list->source, coo_list->destination, coo_list->edge_data);
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
     CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
-    print_csc(csc_list->destination_offsets, csc_list->source_indices, csc_list->edge_data);
+    //print_csc(csc_list->destination_offsets, csc_list->source_indices, csc_list->edge_data);
 
 
     float* result = sssp( csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
-    save_sssp_result(result, argv[2]);
+    
+printf("\nsaving results");
+	save_sssp_result(result, argv[2]);
 
     /*
     const size_t  n = 6, nnz = 10, vertex_numsets = 1, edge_numsets = 1;

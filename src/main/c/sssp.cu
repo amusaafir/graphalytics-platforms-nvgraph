@@ -110,7 +110,8 @@ void save_input_file_as_coo(std::vector<int>& source_vertices_vect, std::vector<
 void save_sssp_result(float* result, char* save_path) {
     printf("\nWriting SSSP results to output file.");
 
-    FILE *output_file = fopen(save_path, "w");
+    char* file_path = save_path;
+    FILE *output_file = fopen(file_path, "w");
 
     if (output_file == NULL) {
         printf("\nError writing results to output file.");

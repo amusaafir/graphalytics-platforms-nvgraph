@@ -61,14 +61,14 @@ int SIZE_VERTICES;
 int SIZE_EDGES;
 int IS_GRAPH_UNDIRECTED;
 int SSSP_SOURCE_VERTEX = -1;
-std::unordered_map<int, int> map_from_coordinate_to_vertex; // Required for validation
+std::unordered_map<int, unsigned long> map_from_coordinate_to_vertex; // Required for validation
 
 std::string getEpoch() {
     return std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
-int add_vertex_as_coordinate(std::vector<int>& vertices_type, std::unordered_map<int, int>& map_from_vertex_to_coordinate, std::unordered_map<int, int>& map_from_coordinate_to_vertex, int vertex, int coordinate) {
+int add_vertex_as_coordinate(std::vector<unsigned long>& vertices_type, std::unordered_map<unsigned long, int>& map_from_vertex_to_coordinate, std::unordered_map<int, unsigned long>& map_from_coordinate_to_vertex, unsigned long vertex, int coordinate) {
     if (map_from_vertex_to_coordinate.count(vertex)) {
         vertices_type.push_back(map_from_vertex_to_coordinate.at(vertex));
 
@@ -120,7 +120,7 @@ void save_sssp_result(float* result, char* save_path) {
     }
 
     for (int i = 0; i < SIZE_VERTICES; i++) {
-        fprintf(output_file, "%d %f\n", map_from_coordinate_to_vertex[i], result[i]);
+        fprintf(output_file, "%ul %f\n", map_from_coordinate_to_vertex[i], result[i]);
     }
 
     fclose(output_file);
@@ -148,11 +148,11 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
         }
 
         // Save source, destination and weight
-        int source_vertex;
-        int target_vertex;
+        unsigned long source_vertex;
+        unsigned long target_vertex;
         float weight;
 
-        sscanf(line, "%d%d%f\t", &source_vertex, &target_vertex, &weight);
+        sscanf(line, "%ul%ul%f\t", &source_vertex, &target_vertex, &weight);
 
         // Add vertices to the source and target arrays, forming an edge accordingly
         current_coordinate = add_vertex_as_coordinate(source_vertices_vect, map_from_vertex_to_coordinate, map_from_coordinate_to_vertex, source_vertex, current_coordinate);

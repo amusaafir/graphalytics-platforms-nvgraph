@@ -107,6 +107,22 @@ void save_input_file_as_coo(std::vector<int>& source_vertices_vect, std::vector<
     fclose(output_file);
 }
 
+void save_sssp_result(float* result, char* save_path) {
+    printf("\nWriting SSSP results to output file.");
+
+    FILE *output_file = fopen(save_path, "w");
+
+    if (output_file == NULL) {
+        printf("\nError writing results to output file.");
+        exit(1);
+    }
+
+    for (int i = 0; i < SIZE_VERTICES; i++) {
+        fprintf("%d\t%f", i, result[i]);
+    }
+
+    fclose(output_file);
+}
 
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices_vect, std::vector<int> destination_vertices_vect, std::vector<float> edge_data_vect, char* file_path) {
     printf("\nLoading graph file from: %s to COO", file_path);
@@ -291,7 +307,7 @@ CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indi
     //copy data back to host
 }
 
-void sssp(int* source_indices, int* destination_offsets, float* weights) {
+float* sssp(int* source_indices, int* destination_offsets, float* weights) {
     printf("\nPerforming SSSP");
     const size_t  n = SIZE_VERTICES, nnz = SIZE_EDGES, vertex_numsets = 1, edge_numsets = 1;
     float *sssp_1_h;
@@ -328,18 +344,22 @@ void sssp(int* source_indices, int* destination_offsets, float* weights) {
     check(nvgraphGetVertexData(handle, graph, (void*)sssp_1_h, 0));
     printf("\nDone with sssp");
     //Clean
-    free(sssp_1_h); free(vertex_dim);
+    //free(sssp_1_h);
+    free(vertex_dim);
     free(vertex_dimT); free(CSC_input);
     check(nvgraphDestroyGraphDescr(handle, graph));
     check(nvgraphDestroy(handle));
+
+    return sssp_1_h;
 }
 
 
 int main(int argc, char **argv) {
 
-    IS_GRAPH_UNDIRECTED = strtol(argv[2], NULL, 10);
-    SSSP_SOURCE_VERTEX = strtol(argv[3], NULL, 10);
+    IS_GRAPH_UNDIRECTED = strtol(argv[3], NULL, 10);
+    SSSP_SOURCE_VERTEX = strtol(argv[4], NULL, 10);
     std::cout << "Input graph path: " << argv[1] << "\n";
+    std::cout << "Result output path: " << argv[2] << "\n";
     std::cout << "Is undirected: " << IS_GRAPH_UNDIRECTED << "\n";
     std::cout << "Source vertex: " << SSSP_SOURCE_VERTEX << "\n";
 
@@ -356,7 +376,8 @@ int main(int argc, char **argv) {
     print_csc(csc_list->destination_offsets, csc_list->source_indices, csc_list->edge_data);
 
 
-    sssp( csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data) {
+    float* result = sssp( csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
+    save_sssp_result(result, argv[2]);
 
     /*
     const size_t  n = 6, nnz = 10, vertex_numsets = 1, edge_numsets = 1;

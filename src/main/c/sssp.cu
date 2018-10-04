@@ -120,7 +120,7 @@ void save_sssp_result(float* result, char* save_path) {
     }
 
     for (int i = 0; i < SIZE_VERTICES; i++) {
-        fprintf(output_file, "%d %f\n", i, result[i]);
+        fprintf(output_file, "%d %f\n", map_from_coordinate_to_vertex[i], result[i]);
     }
 
     fclose(output_file);

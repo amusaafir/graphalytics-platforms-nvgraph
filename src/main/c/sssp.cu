@@ -119,7 +119,7 @@ void save_sssp_result(float* result, char* save_path) {
     }
 
     for (int i = 0; i < SIZE_VERTICES; i++) {
-        fprintf("%d\t%f", i, result[i]);
+        fprintf(output_file, "%d %f\n", i, result[i]);
     }
 
     fclose(output_file);
@@ -170,6 +170,17 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
     }
 
     fclose(file);
+
+printf("The source vertices vect size is\n");
+
+
+for(auto it = map_from_vertex_to_coordinate.cbegin(); it != map_from_vertex_to_coordinate.cend(); ++it)
+{
+    std::cout << it->first << " " << it->second << "\n";
+}
+
+printf("---------");
+
 
     SIZE_VERTICES = map_from_vertex_to_coordinate.size();
     SIZE_EDGES = source_vertices_vect.size();

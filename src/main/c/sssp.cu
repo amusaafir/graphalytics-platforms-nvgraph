@@ -37,6 +37,7 @@ typedef struct CSR_List {
 typedef struct CSC_List {
     int* destination_offsets;
     int* source_indices;
+    float* edge_data;
 } CSC_List;
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
@@ -188,19 +189,15 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
 */
     printf("Printing source & destination edges (vect)");
 
-for (int i = 0; i < SIZE_EDGES; i++) {
-
-
-
-
-             printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
+    for (int i = 0; i < SIZE_EDGES; i++) {
+        printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
     }
 
 
 
-int* source_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
-int* destination_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
-float* edge_data_arr = (float*) malloc(sizeof(float) * SIZE_EDGES);
+    int* source_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
+    int* destination_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
+    float* edge_data_arr = (float*) malloc(sizeof(float) * SIZE_EDGES);
 
     for (int i = 0; i < SIZE_EDGES; i++) {
               source_arr[i] = source_vertices_vect[i];
@@ -210,15 +207,15 @@ float* edge_data_arr = (float*) malloc(sizeof(float) * SIZE_EDGES);
 //             printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
     }
 
-coo_list->source = source_arr;
-coo_list->destination = destination_arr;
-coo_list->edge_data = edge_data_arr;
+    coo_list->source = source_arr;
+    coo_list->destination = destination_arr;
+    coo_list->edge_data = edge_data_arr;
 
 
     return coo_list;
 }
 
-void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
+CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
     print_coo(source_indices_h, destination_indices_h, edge_data_h);
 
     nvgraphHandle_t handle;
@@ -280,8 +277,15 @@ void convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h
     cudaMemcpy(offsets_h, *offsets_d, (nvertices + 1)*sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(edge_data_h, dst_edge_data_d, nedges*sizeof(float), cudaMemcpyDeviceToHost);
 
-    print_csc(offsets_h, indices_h, edge_data_h);
+   // print_csc(offsets_h, indices_h, edge_data_h);
 
+     CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
+     csc_list->destination_offsets = offsets_h;
+     csc_list->source_indices = indices_h;
+     csc_list->edge_data = edge_data_h;
+
+
+    return csc_list;
     //bookmark..
     //free mem..
     //copy data back to host
@@ -304,8 +308,8 @@ int main(int argc, char **argv) {
     //printf("YAY: %d", coo_list->source[0]);
 	//print_coo(coo_list->source, coo_list->destination, coo_list->edge_data);
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-    /*CSC_List* csc_list = */convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
-    //print_csc(csc_list->destination_offsets, csc_list->source_indices);
+    CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+    print_csc(csc_list->destination_offsets, csc_list->source_indices);
 
     /*
     const size_t  n = 6, nnz = 10, vertex_numsets = 1, edge_numsets = 1;

@@ -120,7 +120,12 @@ void save_sssp_result(float* result, char* save_path) {
     }
 
     for (int i = 0; i < SIZE_VERTICES; i++) {
-        fprintf(output_file, "%lu %f\n", map_from_coordinate_to_vertex[i], result[i]);
+         
+          if (result[i] >= std::numeric_limits<float>::max()) {
+            fprintf(output_file, "%lu %s\n", map_from_coordinate_to_vertex[i], "inf");
+             continue;
+          } 
+          fprintf(output_file, "%lu %f\n", map_from_coordinate_to_vertex[i], result[i]);
     }
 
     fclose(output_file);

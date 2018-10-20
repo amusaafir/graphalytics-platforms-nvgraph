@@ -43,6 +43,7 @@ public abstract class NvgraphJob {
 	private static final Logger LOG = LogManager.getLogger();
 
 	protected CommandLine commandLine;
+	protected List<String> args = new ArrayList<>();
     private final String jobId;
 	private final String logPath;
 	private final String inputPath;
@@ -109,11 +110,13 @@ public abstract class NvgraphJob {
 		executor.setExitValue(0);
 		return executor.execute(commandLine);*/
 
-		List<String> args = new ArrayList<>();
+
 		//args.add(graphPath);
 		//addJobArguments(args);
 
+		System.out.println("Appending dataset params:");
 		appendDatasetParameters(inputPath, outputPath);
+		System.out.println("Appending algo params:");
 		appendAlgorithmParameters();
 
 		NvgraphPlatform.runCommand("", NvgraphPlatform.BINARY_DIRECTORY + "/sssp", args);
@@ -140,13 +143,13 @@ public abstract class NvgraphJob {
 	private void appendDatasetParameters(String inputPath, String outputPath) {
 
 		//commandLine.addArgument("--input-path");
-		commandLine.addArgument(Paths.get(inputPath).toString());
+		args.add(inputPath);
 
 		//commandLine.addArgument("--output-path");
-		commandLine.addArgument(Paths.get(outputPath).toString());
+		args.add(outputPath);
 
 		// Assume graph is always undirected
-		commandLine.addArgument(String.valueOf(1), false);
+		args.add("1");
 
 	}
 

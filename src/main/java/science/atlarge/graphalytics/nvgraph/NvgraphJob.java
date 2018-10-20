@@ -113,9 +113,8 @@ public abstract class NvgraphJob {
 		//args.add(graphPath);
 		//addJobArguments(args);
 
-		if (outputPath != null) {
-			args.add(outputPath);
-		}
+		appendDatasetParameters(inputPath, outputPath);
+		appendAlgorithmParameters();
 
 		NvgraphPlatform.runCommand("", NvgraphPlatform.BINARY_DIRECTORY + "/sssp", args);
 
@@ -140,11 +139,14 @@ public abstract class NvgraphJob {
 	 */
 	private void appendDatasetParameters(String inputPath, String outputPath) {
 
-		commandLine.addArgument("--input-path");
+		//commandLine.addArgument("--input-path");
 		commandLine.addArgument(Paths.get(inputPath).toString());
 
-		commandLine.addArgument("--output-path");
+		//commandLine.addArgument("--output-path");
 		commandLine.addArgument(Paths.get(outputPath).toString());
+
+		// Assume graph is always undirected
+		commandLine.addArgument(String.valueOf(1), false);
 
 	}
 

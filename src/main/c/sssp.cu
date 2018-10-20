@@ -378,7 +378,13 @@ float* sssp(int* source_indices, int* destination_offsets, float* weights) {
     // Solve
     //int source_vert = 0;
     printf("\nCHECK 6000");
+
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::cout << "Processing starts at: " << getEpoch() << std::endl;
     check(nvgraphSssp(handle, graph, 0,  &SSSP_SOURCE_VERTEX, 0));
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Processing ends at: " << getEpoch() << std::endl;
+
     // Get and print result
     check(nvgraphGetVertexData(handle, graph, (void*)sssp_1_h, 0));
     printf("\nDone with sssp");

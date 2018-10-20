@@ -412,7 +412,7 @@ int main(int argc, char **argv) {
     std::vector<int> destination_vertices_vect;
     std::vector<float> edge_data_vect;
 
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point startLoading = std::chrono::steady_clock::now();
     std::cout << "Loading starts at: " << getEpoch() << std::endl;
 
     COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices_vect, destination_vertices_vect, edge_data_vect, argv[1]);
@@ -423,15 +423,15 @@ int main(int argc, char **argv) {
     CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
     //print_csc(csc_list->destination_offsets, csc_list->source_indices, csc_list->edge_data);
 
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point endLoading = std::chrono::steady_clock::now();
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point startMakespan = std::chrono::steady_clock::now();
     std::cout << "Makespan starts at: " << getEpoch() << std::endl;
 
     float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
 
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point endMakespan = std::chrono::steady_clock::now();
     std::cout << "Makespan ends at: " << getEpoch() << std::endl;
 
 

@@ -115,7 +115,6 @@ public class NvgraphPlatform implements Platform {
 
 	@Override
 	public void run(RunSpecification runSpecification) throws PlatformExecutionException {
-
 		BenchmarkRun benchmarkRun = runSpecification.getBenchmarkRun();
 		BenchmarkRunSetup benchmarkRunSetup = runSpecification.getBenchmarkRunSetup();
 		RuntimeSetup runtimeSetup = runSpecification.getRuntimeSetup();
@@ -123,7 +122,7 @@ public class NvgraphPlatform implements Platform {
 		Algorithm algorithm = benchmarkRun.getAlgorithm();
 		NvgraphConfiguration platformConfig = NvgraphConfiguration.parsePropertiesFile();
 		//String inputPath = runtimeSetup.getLoadedGraph().getLoadedPath();
-		String inputPath = runtimeSetup.getLoadedGraph().getEdgePath();
+		String inputPath = runSpecification.getBenchmarkRun().getGraph().getSourceGraph().getEdgeFilePath();
 		String outputPath = benchmarkRunSetup.getOutputDir().resolve(benchmarkRun.getName()).toAbsolutePath().toString();
 
 		System.out.println("Note: Loading graph path: " + inputPath);

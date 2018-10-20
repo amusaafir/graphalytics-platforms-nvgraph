@@ -67,8 +67,20 @@ public class NvgraphCollector {
 	}
 
 	public static BenchmarkMetric collectProcessingTime(Path logPath) throws Exception {
-		System.out.println("Collecting processing time!!!!!!!!!!!!!!");
-		BigDecimal procTime;
+		return collectMetric("processing time", ProcTimeLog.START_PROC_TIME, ProcTimeLog.END_PROC_TIME, logPath);
+	}
+
+	public static BenchmarkMetric collectMakepan(Path logPath) throws Exception {
+		return collectMetric("makespan", "Makespan starts at", "Makespan ends at", logPath);
+	}
+
+	public static BenchmarkMetric collectLoadingTime(Path logPath) throws Exception {
+		return collectMetric("loading time", "Loading starts at", "Loading ends at", logPath);
+	}
+
+	public static BenchmarkMetric collectMetric(String metricName, final String startLine, final String endLine, Path logPath) throws Exception {
+		System.out.println("Collecting " + metricName + "!");
+		BigDecimal metricTime;
 
 		final AtomicLong startTime = new AtomicLong(-1);
 		final AtomicLong endTime = new AtomicLong(-1);
@@ -81,13 +93,12 @@ public class NvgraphCollector {
 					String line;
 					while ((line = reader.readLine()) != null) {
 						try {
-							if (line.contains(ProcTimeLog.START_PROC_TIME)) {
-								System.out.println("FOUND PROCESSING TIME!!!!!!!!!!!!!!!!!!!!!!!!");
+							if (line.contains(startLine)) {
 								String[] lineParts = line.split("\\s+");
 								startTime.set(Long.parseLong(lineParts[lineParts.length - 1]));
 							}
 
-							if (line.contains(ProcTimeLog.END_PROC_TIME)) {
+							if (line.contains(endLine)) {
 								String[] lineParts = line.split("\\s+");
 								endTime.set(Long.parseLong(lineParts[lineParts.length - 1]));
 							}
@@ -102,12 +113,12 @@ public class NvgraphCollector {
 		});
 
 		if (startTime.get() != -1 && endTime.get() != -1) {
-			procTime = (new BigDecimal(endTime.get() - startTime.get()))
+			metricTime = (new BigDecimal(endTime.get() - startTime.get()))
 					.divide(new BigDecimal(1000), 3, BigDecimal.ROUND_CEILING);
 
-			return new BenchmarkMetric(procTime, "s");
+			return new BenchmarkMetric(metricTime, "s");
 		} else {
-			throw new IllegalArgumentException("Failed to extract processing time");
+			throw new IllegalArgumentException("Failed to extract " + metricName);
 		}
 	}
 

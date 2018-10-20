@@ -176,6 +176,10 @@ public class NvgraphPlatform implements Platform {
 
 		BenchmarkMetrics metrics = new BenchmarkMetrics();
 		metrics.setProcessingTime(NvgraphCollector.collectProcessingTime(logDir));
+		metrics.setLoadTime(NvgraphCollector.collectLoadingTime(logDir));
+		metrics.setMakespan(NvgraphCollector.collectMakepan(logDir));
+
+
 		return metrics;
 	}
 

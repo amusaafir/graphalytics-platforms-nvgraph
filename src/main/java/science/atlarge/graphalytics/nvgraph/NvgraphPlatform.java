@@ -122,7 +122,8 @@ public class NvgraphPlatform implements Platform {
 
 		Algorithm algorithm = benchmarkRun.getAlgorithm();
 		NvgraphConfiguration platformConfig = NvgraphConfiguration.parsePropertiesFile();
-		String inputPath = runtimeSetup.getLoadedGraph().getLoadedPath();
+		//String inputPath = runtimeSetup.getLoadedGraph().getLoadedPath();
+		String inputPath = runtimeSetup.getLoadedGraph().getEdgePath();
 		String outputPath = benchmarkRunSetup.getOutputDir().resolve(benchmarkRun.getName()).toAbsolutePath().toString();
 
 		System.out.println("Note: Loading graph path: " + inputPath);

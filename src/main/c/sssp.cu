@@ -492,7 +492,7 @@ float* sssp(int* source_indices, int* destination_offsets, float* weights) {
     return sssp_1_h;
 }
 
-float* pagerank(int* source_indices, int* destination_offsets, float* weights) {
+float* pagerank(int* source_indices_h, int* destination_offsets_h, float* weights_h) {
     size_t  n = SIZE_VERTICES, nnz = SIZE_EDGES, vert_sets = 2, edge_sets = 1;
     float alpha1 = 0.85f; void *alpha1_p = (void *) &alpha1;
     // nvgraph variables
@@ -506,9 +506,9 @@ float* pagerank(int* source_indices, int* destination_offsets, float* weights) {
     vertex_dimT = (cudaDataType_t*)malloc(vert_sets*sizeof(cudaDataType_t));
     CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
     // Initialize host data
-    float weights_h[] = weights;
-    int destination_offsets_h[] = destination_offsets;
-    int source_indices_h[] = source_indices;
+    //float weights_h[] = weights;
+    //int destination_offsets_h[] = destination_offsets;
+    //int source_indices_h[] = source_indices;
     float bookmark_h[SIZE_VERTICES];
 
     for (int i = 0 ; i < SIZE_VERTICES; i++) {
@@ -536,7 +536,7 @@ float* pagerank(int* source_indices, int* destination_offsets, float* weights) {
     check(nvgraphGetVertexData(handle, graph, vertex_dim[1], 1));
 
     for (int i = 0; i<n; i++)  printf("\nPR of vertex %d: %f",i, pr_1[i]);
-    
+
     check(nvgraphDestroyGraphDescr(handle, graph));
     check(nvgraphDestroy(handle));
     /*free(pr_1);*/ free(vertex_dim); free(vertex_dimT);

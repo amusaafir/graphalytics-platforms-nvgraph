@@ -507,16 +507,19 @@ int main(int argc, char **argv) {
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
     switch (SELECTED_ALGORITHM) {
-        case "SSSP":
+        case "SSSP": {
             float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
             save_sssp_result(result, argv[2]);
             break;
-        case "BFS":
+        }
+        case "BFS": {
             int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
             save_bfs_result(result, argv[2]);
             break;
-        default:
+        }
+        default: {
             std::cout << "Selected algorithm does not exist.";
+        }
     }
 
     return 0;

@@ -513,10 +513,10 @@ int main(int argc, char **argv) {
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
-    if (strcmp(SELECTED_ALGORITHM, "SSSP") != 0) {
+    if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
         float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]);
-    } else if (strcmp(SELECTED_ALGORITHM, "BFS") != 0) {
+    } else if (strcmp(SELECTED_ALGORITHM, "BFS") == 0) {
         int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
         save_bfs_result(result, argv[2]);
     } else {

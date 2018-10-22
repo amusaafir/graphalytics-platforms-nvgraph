@@ -139,10 +139,10 @@ public class NvgraphPlatform implements Platform {
 			case LCC:
 				job = new LocalClusteringCoefficientJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;
-			case PR:
+			*/case PR:
 				job = new PageRankJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;
-			case WCC:
+			/*case WCC:
 				job = new WeaklyConnectedComponentsJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;*/
 			case SSSP:

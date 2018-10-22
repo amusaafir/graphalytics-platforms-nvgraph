@@ -51,14 +51,8 @@ public final class PageRankJob extends NvgraphJob {
 	@Override
 	protected void appendAlgorithmParameters() {
 
-		commandLine.addArgument("--algorithm");
-		commandLine.addArgument("pr");
-
-		commandLine.addArgument("--damping-factor", false);
-		commandLine.addArgument(String.valueOf(dampingFactor), false);
-
-		commandLine.addArgument("--max-iteration", false);
-		commandLine.addArgument(String.valueOf(iteration), false);
+		args.add("2"); // not necessary to add source vertex
+		args.add("PR");
 
 	}
 }

@@ -130,10 +130,10 @@ public class NvgraphPlatform implements Platform {
 
 		NvgraphJob job;
 		switch (algorithm) {
-			/*case BFS:
+			case BFS:
 				job = new BreadthFirstSearchJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;
-			case CDLP:
+			/*case CDLP:
 				job = new CommunityDetectionLPJob(runSpecification, platformConfig, inputPath, outputPath);
 				break;
 			case LCC:

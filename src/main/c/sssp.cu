@@ -353,6 +353,8 @@ CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indi
     return csc_list;
 }
 
+
+
 int* bfs(int* source_offsets_h, int* destination_indices_h) {
     std::chrono::steady_clock::time_point startMakespan = std::chrono::steady_clock::now();
     std::cout << "Makespan starts at: " << getEpoch() << std::endl;
@@ -506,10 +508,10 @@ int main(int argc, char **argv) {
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
-    if (SELECTED_ALGORITHM == "SSSP") {
+    if (strcmp(SELECTED_ALGORITHM, "SSSP") != 0) {
         float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]);
-    } else if (SELECTED_ALGORITHM == "BFS") {
+    } else if (strcmp(SELECTED_ALGORITHM, "BFS") != 0) {
         int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
         save_bfs_result(result, argv[2]);
     } else {

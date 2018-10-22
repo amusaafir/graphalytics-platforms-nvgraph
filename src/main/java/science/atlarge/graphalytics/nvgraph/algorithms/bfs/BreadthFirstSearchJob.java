@@ -50,5 +50,6 @@ public final class BreadthFirstSearchJob extends NvgraphJob {
 	protected void appendAlgorithmParameters() {
 		System.out.println("Note: Appending BFS params!");
 		args.add(String.valueOf(this.sourceVertex));
+		args.add("BFS");
 	}
 }

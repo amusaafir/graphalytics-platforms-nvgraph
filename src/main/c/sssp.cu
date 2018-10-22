@@ -121,7 +121,7 @@ void save_bfs_result(int* result, char* save_path) {
 
     for (int i = 0; i < SIZE_VERTICES; i++) {
         if (result[i] >= std::numeric_limits<int>::max()) {
-         fprintf(output_file, "%lu %d\n", map_from_coordinate_to_vertex[i], "inf");
+         fprintf(output_file, "%lu %s\n", map_from_coordinate_to_vertex[i], "inf");
          continue;
         }
         //printf("yay: %lu %d  %d \n", map_from_coordinate_to_vertex[i], i,  result[i]);
@@ -146,7 +146,7 @@ void save_sssp_result(float* result, char* save_path) {
          
           if (result[i] >= std::numeric_limits<float>::max()) {
             fprintf(output_file, "%lu %s\n", map_from_coordinate_to_vertex[i], "inf");
-             continue;
+            continue;
           } 
           fprintf(output_file, "%lu %f\n", map_from_coordinate_to_vertex[i], result[i]);
     }
@@ -399,12 +399,12 @@ int* bfs(int* source_offsets_h, int* destination_indices_h) {
     nvgraphTraversalSetPredecessorsIndex(&traversal_param, predecessors_index);
     nvgraphTraversalSetUndirectedFlag(&traversal_param, false);
     //Computing traversal using BFS algorithm
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point startBFSProcTime = std::chrono::steady_clock::now();
     std::cout << "Processing starts at: " << getEpoch() << std::endl;
 
     check_status(nvgraphTraversal(handle, graph, NVGRAPH_TRAVERSAL_BFS, &source_vert, traversal_param));
 
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point endBFSProcTime= std::chrono::steady_clock::now();
     std::cout << "Processing ends at: " << getEpoch() << std::endl;
 
     // Get result

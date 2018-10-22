@@ -512,7 +512,7 @@ int main(int argc, char **argv) {
             save_sssp_result(result, argv[2]);
             break;
         case "BFS":
-            float* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
+            int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
             save_bfs_result(result, argv[2]);
             break;
         default:

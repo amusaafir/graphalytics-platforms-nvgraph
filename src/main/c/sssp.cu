@@ -121,7 +121,7 @@ void save_bfs_result(int* result, char* save_path) {
 
     for (int i = 0; i < SIZE_VERTICES; i++) {
         if (result[i] >= std::numeric_limits<int>::max()) {
-         fprintf(output_file, "%lu %s\n", map_from_coordinate_to_vertex[i], "inf");
+         fprintf(output_file, "%lu %s\n", map_from_coordinate_to_vertex[i], "9223372036854775807");
          continue;
         }
         //printf("yay: %lu %d  %d \n", map_from_coordinate_to_vertex[i], i,  result[i]);

@@ -399,7 +399,14 @@ int* bfs(int* source_offsets_h, int* destination_indices_h) {
     nvgraphTraversalSetPredecessorsIndex(&traversal_param, predecessors_index);
     nvgraphTraversalSetUndirectedFlag(&traversal_param, false);
     //Computing traversal using BFS algorithm
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::cout << "Processing starts at: " << getEpoch() << std::endl;
+
     check_status(nvgraphTraversal(handle, graph, NVGRAPH_TRAVERSAL_BFS, &source_vert, traversal_param));
+
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::cout << "Processing ends at: " << getEpoch() << std::endl;
+
     // Get result
     check_status(nvgraphGetVertexData(handle, graph, (void*) bfs_distances_h, distances_index));
     check_status(nvgraphGetVertexData(handle, graph, (void*) bfs_predecessors_h, predecessors_index));

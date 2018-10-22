@@ -493,6 +493,9 @@ float* sssp(int* source_indices, int* destination_offsets, float* weights) {
 }
 
 float* pagerank(int* source_indices_h, int* destination_offsets_h, float* weights_h) {
+    std::chrono::steady_clock::time_point startMakespanPR = std::chrono::steady_clock::now();
+    std::cout << "Makespan starts at: " << getEpoch() << std::endl;
+
     size_t  n = SIZE_VERTICES, nnz = SIZE_EDGES, vert_sets = 2, edge_sets = 1;
     float alpha1 = 0.85f; void *alpha1_p = (void *) &alpha1;
     // nvgraph variables
@@ -531,7 +534,14 @@ float* pagerank(int* source_indices_h, int* destination_offsets_h, float* weight
         check(nvgraphSetVertexData(handle, graph, vertex_dim[i], i));
     check(nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0));
 
+    std::chrono::steady_clock::time_point startProcTimePR = std::chrono::steady_clock::now();
+    std::cout << "Processing starts at: " << getEpoch() << std::endl;
+
     check(nvgraphPagerank(handle, graph, 0, alpha1_p, 0, 0, 1, 0.0f, 0));
+
+    std::chrono::steady_clock::time_point endProcTimePR = std::chrono::steady_clock::now();
+    std::cout << "Processing ends at: " << getEpoch() << std::endl;
+
     // Get result
     check(nvgraphGetVertexData(handle, graph, vertex_dim[1], 1));
 
@@ -541,6 +551,9 @@ float* pagerank(int* source_indices_h, int* destination_offsets_h, float* weight
     check(nvgraphDestroy(handle));
     /*free(pr_1);*/ free(vertex_dim); free(vertex_dimT);
     free(CSC_input);
+
+    std::chrono::steady_clock::time_point endMakespanPR = std::chrono::steady_clock::now();
+    std::cout << "Makespan ends at: " << getEpoch() << std::endl;
 
     return pr_1;
 }

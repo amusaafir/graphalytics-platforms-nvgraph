@@ -506,20 +506,14 @@ int main(int argc, char **argv) {
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
-    switch (SELECTED_ALGORITHM) {
-        case "SSSP": {
-            float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
-            save_sssp_result(result, argv[2]);
-            break;
-        }
-        case "BFS": {
-            int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
-            save_bfs_result(result, argv[2]);
-            break;
-        }
-        default: {
-            std::cout << "Selected algorithm does not exist.";
-        }
+    if (SELECTED_ALGORITHM == "SSSP") {
+        float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
+        save_sssp_result(result, argv[2]);
+    } else if (SELECTED_ALGORITHM == "BFS") {
+        int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
+        save_bfs_result(result, argv[2]);
+    } else {
+        std::cout << "Selected algorithm does not exist.";
     }
 
     return 0;

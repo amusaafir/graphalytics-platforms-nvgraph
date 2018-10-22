@@ -353,7 +353,12 @@ CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indi
     return csc_list;
 }
 
-
+void check_status(nvgraphStatus_t status){
+    if ((int)status != 0)    {
+        printf("ERROR : %d\n",status);
+        exit(0);
+    }
+}
 
 int* bfs(int* source_offsets_h, int* destination_indices_h) {
     std::chrono::steady_clock::time_point startMakespan = std::chrono::steady_clock::now();

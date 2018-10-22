@@ -492,6 +492,59 @@ float* sssp(int* source_indices, int* destination_offsets, float* weights) {
     return sssp_1_h;
 }
 
+float* pagerank(int* source_indices, int* destination_offsets, float* weights) {
+    size_t  n = SIZE_VERTICES, nnz = SIZE_EDGES, vert_sets = 2, edge_sets = 1;
+    float alpha1 = 0.85f; void *alpha1_p = (void *) &alpha1;
+    // nvgraph variables
+    nvgraphHandle_t handle; nvgraphGraphDescr_t graph;
+    nvgraphCSCTopology32I_t CSC_input;
+    cudaDataType_t edge_dimT = CUDA_R_32F;
+    cudaDataType_t* vertex_dimT;
+    // Allocate host data
+    float *pr_1 = (float*)malloc(n*sizeof(float));
+    void **vertex_dim = (void**)malloc(vert_sets*sizeof(void*));
+    vertex_dimT = (cudaDataType_t*)malloc(vert_sets*sizeof(cudaDataType_t));
+    CSC_input = (nvgraphCSCTopology32I_t) malloc(sizeof(struct nvgraphCSCTopology32I_st));
+    // Initialize host data
+    float weights_h[] = weights;
+    int destination_offsets_h[] = destination_offsets;
+    int source_indices_h[] = source_indices;
+    float bookmark_h[SIZE_VERTICES];
+
+    for (int i = 0 ; i < SIZE_VERTICES; i++) {
+        bookmark_h[i] = 1.0f;
+    }
+
+    vertex_dim[0] = (void*)bookmark_h; vertex_dim[1]= (void*)pr_1;
+    vertex_dimT[0] = CUDA_R_32F; vertex_dimT[1]= CUDA_R_32F, vertex_dimT[2]= CUDA_R_32F;
+    // Starting nvgraph
+    check(nvgraphCreate (&handle));
+    check(nvgraphCreateGraphDescr (handle, &graph));
+    CSC_input->nvertices = n; CSC_input->nedges = nnz;
+    CSC_input->destination_offsets = destination_offsets_h;
+    CSC_input->source_indices = source_indices_h;
+    // Set graph connectivity and properties (tranfers)
+    check(nvgraphSetGraphStructure(handle, graph, (void*)CSC_input, NVGRAPH_CSC_32));
+    check(nvgraphAllocateVertexData(handle, graph, vert_sets, vertex_dimT));
+    check(nvgraphAllocateEdgeData  (handle, graph, edge_sets, &edge_dimT));
+    for (int i = 0; i < 2; ++i)
+        check(nvgraphSetVertexData(handle, graph, vertex_dim[i], i));
+    check(nvgraphSetEdgeData(handle, graph, (void*)weights_h, 0));
+
+    check(nvgraphPagerank(handle, graph, 0, alpha1_p, 0, 0, 1, 0.0f, 0));
+    // Get result
+    check(nvgraphGetVertexData(handle, graph, vertex_dim[1], 1));
+
+    for (int i = 0; i<n; i++)  printf("\nPR of vertex %d: %f",i, pr_1[i]);
+    
+    check(nvgraphDestroyGraphDescr(handle, graph));
+    check(nvgraphDestroy(handle));
+    /*free(pr_1);*/ free(vertex_dim); free(vertex_dimT);
+    free(CSC_input);
+
+    return pr_1;
+}
+
 
 int main(int argc, char **argv) {
     IS_GRAPH_UNDIRECTED = strtol(argv[3], NULL, 10);
@@ -526,6 +579,9 @@ int main(int argc, char **argv) {
     } else if (strcmp(SELECTED_ALGORITHM, "BFS") == 0) {
         int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
         save_bfs_result(result, argv[2]);
+    } else if (strcmp(SELECTED_ALGORITHM, "PR") == 0) {
+        float* result = pagerank(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
+        save_sssp_result(result, argv[2]); // same structure as pr
     } else {
         std::cout << "Selected algorithm does not exist.";
     }

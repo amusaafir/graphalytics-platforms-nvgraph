@@ -589,12 +589,15 @@ int main(int argc, char **argv) {
     if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
         float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]);
+        free(result);
     } else if (strcmp(SELECTED_ALGORITHM, "BFS") == 0) {
         int* result = bfs(csc_list->destination_offsets, csc_list->source_indices);
         save_bfs_result(result, argv[2]);
+        free(result);
     } else if (strcmp(SELECTED_ALGORITHM, "PR") == 0) {
         float* result = pagerank(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]); // same structure as pr
+        free(result);
     } else {
         std::cout << "Selected algorithm does not exist.";
     }

@@ -224,7 +224,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
     return coo_list;
 }
 
-void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
+CSC_List* convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
     std::unordered_map<int, std::vector<std::tuple<int, float>>> coo_adjacency_list; // vertex, neighbors
 
     for (int i = 0; i < SIZE_EDGES; i++) {
@@ -242,7 +242,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
     if (coo_adjacency_list.size() != SIZE_VERTICES) {
         printf("COO ADJACENCY LIST SIZE DOES NOT EQUAL THE VERTICES SIZE");
     }
-
+/**
     // Print coo adjacency list:
     for (int i = 0; i<SIZE_VERTICES; i++) {
         printf("Neighbors of %d: ", i);
@@ -253,11 +253,11 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
 
         printf("\n");
     }
-
+*/
     // Set values in CSC:
     int* row_offsets = (int*) malloc((SIZE_VERTICES + 1) * sizeof(int));
     int* column_indices = (int*) malloc(SIZE_EDGES * sizeof(int));
-    float* edge_data = (float*) malloc(SIZE_EDGES * size(float));
+    float* edge_data = (float*) malloc(SIZE_EDGES * sizeof(float));
 
     int offsetIndex = 0;
 
@@ -268,14 +268,14 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
 
         // Put neighbours in column_indices arr
         for (int p = 0; p < coo_adjacency_list[i].size(); p++) {
-            printf("\nStartoffset+p = %d", startOffset+p);
+     //       printf("\nStartoffset+p = %d", startOffset+p);
             column_indices[startOffset + p] =  std::get<0>(coo_adjacency_list[i][p]);
             edge_data[startOffset + p] =  std::get<1>(coo_adjacency_list[i][p]);
         }
     }
 
     row_offsets[SIZE_VERTICES] = SIZE_EDGES;
-
+/*
     printf("\nPRINT CSC (no weight)\n");
 
     printf("\nRow Offsets (Vertex Table):\n");
@@ -291,11 +291,17 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
     printf("\nEdge weight:\n");
     for (int i = 0; i < SIZE_EDGES; i++) {
         printf("%f, ", edge_data[i]);
-    }
+    }*/
 
-    // Clean-up
-    free(row_offsets);
-    free(column_indices);
+  CSC_List* csc_list = (CSC_List*)malloc(sizeof(CSC_List));
+    csc_list->destination_offsets = row_offsets;
+    csc_list->source_indices = column_indices;
+    csc_list->edge_data = edge_data;
+ 
+  return csc_list;
+  // Clean-up
+    
+  
 }
 
 CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
@@ -604,10 +610,17 @@ int main(int argc, char **argv) {
 
     COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices_vect, destination_vertices_vect, edge_data_vect, argv[1]);
 
-    convert_coo_to_csc_format_on_host(coo_list->source, coo_list->destination, coo_list->edge_data);
+
  
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-    /*CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+    //CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+
+    CSC_List* csc_list = convert_coo_to_csc_format_on_host(coo_list->source, coo_list->destination, coo_list->edge_data);
+
+    free(coo_list->source);
+    free(coo_list->destination);
+    free(coo_list->edge_data);
+    free(coo_list);
 
     //print_csc(csc_list->destination_offsets, csc_list->source_indices, csc_list->edge_data);
 
@@ -615,7 +628,7 @@ int main(int argc, char **argv) {
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
-    /*if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
+    if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
         float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]);
         free(result);
@@ -629,7 +642,7 @@ int main(int argc, char **argv) {
         free(result);
     } else {
         std::cout << "Selected algorithm does not exist.";
-    }*/
+    }
 
     return 0;
 }

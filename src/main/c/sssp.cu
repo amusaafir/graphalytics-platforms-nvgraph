@@ -11,6 +11,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <tuple>
 
 #include <stdlib.h>
 
@@ -224,14 +225,16 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
 }
 
 void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
-    std::unordered_map<int, std::vector<int>> coo_adjacency_list; // vertex, neighbors
+    std::unordered_map<int, std::vector<std::tuple<int, float>> coo_adjacency_list; // vertex, neighbors
 
     for (int i = 0; i < SIZE_EDGES; i++) {
         if (coo_adjacency_list.count(source_indices_h[i])) { // coordinate already added, so add its neighbour
-            coo_adjacency_list[source_indices_h[i]].push_back(destination_indices_h[i]);
+            std::tuple<int, float> destination_and_weight(destination_indices_h[i], edge_data_h[i]);
+            coo_adjacency_list[source_indices_h[i]].push_back(destination_and_weight);
         } else { // create vector in coordinate key, add first neighbor
             std::vector<int> neighbors_vect;
-            neighbors_vect.push_back(destination_indices_h[i]);
+            std::tuple<int, float> destination_and_weight(destination_indices_h[i], edge_data_h[i]);
+            neighbors_vect.push_back(destination_and_weight);
             coo_adjacency_list[source_indices_h[i]] = neighbors_vect;
         }
     }
@@ -245,7 +248,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
         printf("Neighbors of %d: ", i);
 
         for (int y = 0; y < coo_adjacency_list[i].size(); y++) {
-            printf("%d, ", coo_adjacency_list[i][y]);
+            printf("%d, ", std::get<0>(coo_adjacency_list[i][y]));
         }
 
         printf("\n");
@@ -265,7 +268,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
         // Put neighbours in column_indices arr
         for (int p = 0; p < coo_adjacency_list[i].size(); p++) {
             printf("\nStartoffset+p = %d", startOffset+p);
-            column_indices[startOffset + p] = coo_adjacency_list[i][p];
+            column_indices[startOffset + p] =  std::get<0>(coo_adjacency_list[i][p]);
         }
     }
 

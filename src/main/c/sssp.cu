@@ -157,17 +157,10 @@ void save_sssp_result(float* result, char* save_path) {
 COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices_vect, std::vector<int> destination_vertices_vect, std::vector<float> edge_data_vect, char* file_path) {
     printf("\nLoading graph file from: %s to COO", file_path);
 
-
     FILE* file = fopen(file_path, "r");
-
     char line[256];
-
     int current_coordinate = 0;
-
     std::unordered_map<long long, int> map_from_vertex_to_coordinate;
-
-
-
 
     while (fgets(line, sizeof(line), file)) {
         if (line[0] == '#' || line[0] == '\n') {
@@ -188,7 +181,6 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
 
         edge_data_vect.push_back(weight);
 
-
         // Add the end vertices but swap places this time (undirected)
         if (IS_GRAPH_UNDIRECTED) {
             current_coordinate = add_vertex_as_coordinate(source_vertices_vect, map_from_vertex_to_coordinate, map_from_coordinate_to_vertex, target_vertex, current_coordinate);
@@ -199,18 +191,6 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
     }
 
     fclose(file);
-/*
-printf("The source vertices vect size is\n");
-
-
-for(auto it = map_from_vertex_to_coordinate.cbegin(); it != map_from_vertex_to_coordinate.cend(); ++it)
-{
-    std::cout << it->first << " " << it->second << "\n";
-   //printf("/n%lu %lu %f", it->first, it->second);
-}
-
-printf("---------");
-*/
 
     SIZE_VERTICES = map_from_vertex_to_coordinate.size();
     SIZE_EDGES = source_vertices_vect.size();
@@ -223,46 +203,16 @@ printf("---------");
         exit(1);
     }
 
-//    save_input_file_as_coo(source_vertices_vect, destination_vertices_vect,edge_data_vect, "/var/scratch/musaafir/graphalytics-platforms-nvgraph/src/main/c/coo_save.txt");
-
-    //int* source_vertices = &source_vertices_vect[0];
-    //int* destination_vertices = &destination_vertices_vect[0];
-    //float* edge_data = &edge_data_vect[0];
-
     COO_List* coo_list = (COO_List*)malloc(sizeof(COO_List));
-
-    //source_vertices_vect.reserve(source_vertices_vect.size());
-    //destination_vertices_vect.reserve(destination_vertices_vect.size());
-    //edge_data_vect.reserve(edge_data_vect.size());
-
-
-
-//    coo_list->source = &source_vertices_vect[0];
-  //  coo_list->destination = &destination_vertices_vect[0];
-   // coo_list->edge_data = &edge_data_vect[0];
-    /*
-    for (std::unordered_map<int, int>::const_iterator it = map_from_coordinate_to_vertex.begin(); it != map_from_coordinate_to_vertex.end(); it++) {
-    	printf("coordinate: %d, vertex: %d\n", it->first, it->second);
-	}
-*//*
-    printf("Printing source & destination edges (vect)");
-
-    for (int i = 0; i < SIZE_EDGES; i++) {
-        printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
-    }
-
-*/
 
     int* source_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
     int* destination_arr = (int*) malloc(sizeof(int) * SIZE_EDGES);
     float* edge_data_arr = (float*) malloc(sizeof(float) * SIZE_EDGES);
 
     for (int i = 0; i < SIZE_EDGES; i++) {
-              source_arr[i] = source_vertices_vect[i];
-    destination_arr[i] = destination_vertices_vect[i];
-    edge_data_arr[i] = edge_data_vect[i];
-
-//             printf("\n(%d, %d - %f)", source_vertices_vect[i], destination_vertices_vect[i], edge_data_vect[i]);
+        source_arr[i] = source_vertices_vect[i];
+        destination_arr[i] = destination_vertices_vect[i];
+        edge_data_arr[i] = edge_data_vect[i];
     }
 
     coo_list->source = source_arr;
@@ -271,6 +221,64 @@ printf("---------");
 
 
     return coo_list;
+}
+
+void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
+    std::unordered_map<int, std::vector>> coo_adjacency_list; // vertex, neighbors
+
+    for (int i = 0; i < SIZE_EDGES; i++) {
+        if (coo_adjacency_list.count(source_indices_h[i])) { // coordinate already added, so add its neighbour
+            coo_adjacency_list[source_indices_h[i]].push_back(destination_indices_h[i]);
+        } else { // create vector in coordinate key, add first neighbor
+            std::vector<int> neighbors_vect;
+            neighbors_vect.push_back(destination_indices_h[i]);
+            coo_adjacency_list[source_indices_h[i]] = neighbors_vect;
+        }
+    }
+
+    if (coo_adjacency_list.size() != SIZE_VERTICES) {
+        printf("COO ADJACENCY LIST SIZE DOES NOT EQUAL THE VERTICES SIZE");
+    }
+
+    // Print coo adjacency list:
+    for (int i = 0; i<SIZE_VERTICES; i++) {
+        printf("Neighbors of %d: ");
+
+        for (int y = 0; y < coo_adjacency_list[i].size(); y++) {
+            printf("%d, ", coo_adjacency_list[i][y]);
+        }
+
+        printf("\n");
+    }
+
+    // Set values in CSC:
+    int* row_offsets = (int*) malloc(SIZE_VERTICES + 1 * sizeof(int));
+    int* column_indices = (int*) malloc(SIZE_EDGES * sizeof(int));
+
+    int offsetIndex = 0;
+
+    for (int i = 0; i < SIZE_VERTICES; i++) {
+        int startOffset = offsetIndex;
+        row_offsets[i] = offsetIndex;
+        offsetIndex += coo_adjacency_list[i].size();
+
+        // Put neighbours in column_indices arr
+        for (int p = 0; p < coo_adjacency_list.size(); p++) {
+            column_indices[startOffset + p] = coo_adjacency_list[p];
+        }
+    }
+
+    printf("\nPRINT CSC (no weight)\n");
+
+    printf("\nRow Offsets (Vertex Table):\n");
+    for (int i = 0; i < SIZE_VERTICES + 1; i++) {
+        printf("%d, ", row_offsets[i]);
+    }
+
+    printf("\nColumn Indices (Edge Table):\n");
+    for (int i = 0; i < SIZE_EDGES; i++) {
+        printf("%d, ", column_indices[i]);
+    }
 }
 
 CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
@@ -579,6 +587,8 @@ int main(int argc, char **argv) {
 
     COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices_vect, destination_vertices_vect, edge_data_vect, argv[1]);
 
+    convert_coo_to_csc_format_on_host(coo_list->source, coo_list->destination, coo_list->edge_data);
+/*
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
     CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
 
@@ -586,7 +596,7 @@ int main(int argc, char **argv) {
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
-    if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
+   /* if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
         float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]);
         free(result);
@@ -600,7 +610,7 @@ int main(int argc, char **argv) {
         free(result);
     } else {
         std::cout << "Selected algorithm does not exist.";
-    }
+    }*/
 
     return 0;
 }

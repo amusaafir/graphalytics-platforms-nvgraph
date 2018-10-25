@@ -224,7 +224,7 @@ COO_List* load_graph_from_edge_list_file_to_coo(std::vector<int> source_vertices
 }
 
 void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
-    std::unordered_map<int, std::vector>> coo_adjacency_list; // vertex, neighbors
+    std::unordered_map<int, std::vector<int>> coo_adjacency_list; // vertex, neighbors
 
     for (int i = 0; i < SIZE_EDGES; i++) {
         if (coo_adjacency_list.count(source_indices_h[i])) { // coordinate already added, so add its neighbour
@@ -242,7 +242,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
 
     // Print coo adjacency list:
     for (int i = 0; i<SIZE_VERTICES; i++) {
-        printf("Neighbors of %d: ");
+        printf("Neighbors of %d: ", i);
 
         for (int y = 0; y < coo_adjacency_list[i].size(); y++) {
             printf("%d, ", coo_adjacency_list[i][y]);
@@ -252,7 +252,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
     }
 
     // Set values in CSC:
-    int* row_offsets = (int*) malloc(SIZE_VERTICES + 1 * sizeof(int));
+    int* row_offsets = (int*) malloc((SIZE_VERTICES + 1) * sizeof(int));
     int* column_indices = (int*) malloc(SIZE_EDGES * sizeof(int));
 
     int offsetIndex = 0;
@@ -263,10 +263,13 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
         offsetIndex += coo_adjacency_list[i].size();
 
         // Put neighbours in column_indices arr
-        for (int p = 0; p < coo_adjacency_list.size(); p++) {
-            column_indices[startOffset + p] = coo_adjacency_list[p];
+        for (int p = 0; p < coo_adjacency_list[i].size(); p++) {
+            printf("\nStartoffset+p = %d", startOffset+p);
+            column_indices[startOffset + p] = coo_adjacency_list[i][p];
         }
     }
+
+    row_offsets[SIZE_VERTICES] = SIZE_EDGES;
 
     printf("\nPRINT CSC (no weight)\n");
 
@@ -279,6 +282,11 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
     for (int i = 0; i < SIZE_EDGES; i++) {
         printf("%d, ", column_indices[i]);
     }
+
+
+    // Clean-up
+    free(row_offsets);
+    free(column_indices);
 }
 
 CSC_List* convert_coo_to_csc_format(int* source_indices_h, int* destination_indices_h, float* edge_data_h) {
@@ -588,15 +596,17 @@ int main(int argc, char **argv) {
     COO_List* coo_list = load_graph_from_edge_list_file_to_coo(source_vertices_vect, destination_vertices_vect, edge_data_vect, argv[1]);
 
     convert_coo_to_csc_format_on_host(coo_list->source, coo_list->destination, coo_list->edge_data);
-/*
+ 
     // Convert the COO graph into a CSR format (for the in-memory GPU representation)
-    CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+    /*CSC_List* csc_list = convert_coo_to_csc_format(coo_list->source, coo_list->destination, coo_list->edge_data);
+
+    //print_csc(csc_list->destination_offsets, csc_list->source_indices, csc_list->edge_data);
 
     std::chrono::steady_clock::time_point endLoading = std::chrono::steady_clock::now();
     std::cout << "Loading ends at: " << getEpoch() << std::endl;
 
     /* EXECUTE SELECTED ALGORITHM & SAVE RESULTS */
-   /* if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
+    /*if (strcmp(SELECTED_ALGORITHM, "SSSP") == 0) {
         float* result = sssp(csc_list->source_indices, csc_list->destination_offsets,  csc_list->edge_data);
         save_sssp_result(result, argv[2]);
         free(result);

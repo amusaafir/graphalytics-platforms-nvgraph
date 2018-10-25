@@ -257,6 +257,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
     // Set values in CSC:
     int* row_offsets = (int*) malloc((SIZE_VERTICES + 1) * sizeof(int));
     int* column_indices = (int*) malloc(SIZE_EDGES * sizeof(int));
+    float* edge_data = (float*) malloc(SIZE_EDGES * size(float));
 
     int offsetIndex = 0;
 
@@ -269,6 +270,7 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
         for (int p = 0; p < coo_adjacency_list[i].size(); p++) {
             printf("\nStartoffset+p = %d", startOffset+p);
             column_indices[startOffset + p] =  std::get<0>(coo_adjacency_list[i][p]);
+            edge_data[startOffset + p] =  std::get<1>(coo_adjacency_list[i][p]);
         }
     }
 
@@ -286,6 +288,10 @@ void convert_coo_to_csc_format_on_host(int* source_indices_h, int* destination_i
         printf("%d, ", column_indices[i]);
     }
 
+    printf("\nEdge weight:\n");
+    for (int i = 0; i < SIZE_EDGES; i++) {
+        printf("%f, ", edge_data[i]);
+    }
 
     // Clean-up
     free(row_offsets);
